@@ -4,6 +4,7 @@
 {-# language TypeFamilies #-}
 {-# language ViewPatterns #-}
 {-# language FlexibleInstances #-}
+{-# language MultiParamTypeClasses #-}
 
 module Space where
 
@@ -18,47 +19,52 @@ import Data.Functor.Rep
 import Data.Typeable
 
 import Control.Comonad
+import Control.Comonad.Env
 
-data Space x y a = Space (Ind x, Ind y) (Vector (Vector a))
+data ISpace x y a = ISpace (Ind x, Ind y) (Space x y a)
+  deriving (Eq, Functor)
+
+data Space x y a = Space (Vector (Vector a))
   deriving (Eq, Functor)
 
 newtype Disp x y a = Disp (Space x y a)
 
 instance Show (Disp x y Char) where
-  show (Disp (Space _ v)) = intercalate "\n" . toList . fmap toList $ v
+  show (Disp (Space v)) = intercalate "\n" . toList . fmap toList $ v
 
 instance (Show a, Typeable x, Typeable y) => Show (Space x y a) where
-  show (Space foc v) = "Focus: " <> show foc <> ":\n" <> foldMap ((<> "\n"). show) v
+  show (Space v) = foldMap ((<> "\n"). show) v
 
 instance (Index x, Index y) => Distributive (Space x y) where
   distribute = distributeRep
 
 instance (Index x, Index y) => Representable (Space x y) where
   type Rep (Space x y) = (Ind x, Ind y)
-  index (Space _ v) (unwrapI -> x, unwrapI -> y) = v ! y ! x
-  tabulate desc = Space minBound $ generate numRows generator
+  index (Space v) (unwrapI -> x, unwrapI -> y) = v ! y ! x
+  tabulate desc = Space $ generate numRows generator
     where
       numRows = unwrapI (maxBound :: Ind x) + 1
       numCols = unwrapI (maxBound :: Ind y) + 1
       generator x = generate numCols (\y -> desc (wrapI x, wrapI y))
 
-instance (Index x, Index y) => Comonad (Space x y) where
-  extract w@(Space f _) = index w f
-  duplicate (Space foc v) =
-    let Space _ v' = tabulate desc
-     in Space foc v'
+instance (Index x, Index y) => Comonad (ISpace x y) where
+  extract (ISpace ind s) = index s ind
+  duplicate (ISpace foc v) = ISpace foc $ tabulate desc
     where
-      desc focus = Space focus v
+      desc focus = ISpace focus v
 
-moveTo :: (Index x, Index y) => (Ind x, Ind y) -> Space x y a -> Space x y a
-moveTo foc (Space _ v) = Space foc v
+instance (Index x, Index y) => ComonadEnv (Ind x, Ind y) (ISpace x y) where
+  ask (ISpace foc _) = foc
 
-moveBy :: (Index x, Index y) => (Ind x, Ind y) -> Space x y a -> Space x y a
-moveBy offs (Space curr v)
-  = Space (curr + offs) v
+moveTo :: (Index x, Index y) => (Ind x, Ind y) -> ISpace x y a -> ISpace x y a
+moveTo foc (ISpace _ v) = ISpace foc v
+
+moveBy :: (Index x, Index y) => (Ind x, Ind y) -> ISpace x y a -> ISpace x y a
+moveBy offs (ISpace curr v)
+  = ISpace (curr + offs) v
 
 fromLists :: (Index x, Index y) => [[a]] -> Space x y a
-fromLists xs = Space minBound $ generate (length xs) rows
+fromLists xs = Space $ generate (length xs) rows
   where
     rows i = fromList (xs !! i)
 
