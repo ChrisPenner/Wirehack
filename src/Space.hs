@@ -20,11 +20,12 @@ import Data.Typeable
 
 import Control.Comonad
 import Control.Comonad.Env
+import Control.Comonad.Store
 
-data ISpace x y a = ISpace (Ind x, Ind y) (Space x y a)
+data ISpace x y a = ISpace (x, y) (Space x y a)
   deriving (Eq, Functor)
 
-data Space x y a = Space (Vector (Vector a))
+newtype Space x y a = Space (Vector (Vector a))
   deriving (Eq, Functor)
 
 newtype Disp x y a = Disp (Space x y a)
@@ -39,13 +40,21 @@ instance (Index x, Index y) => Distributive (Space x y) where
   distribute = distributeRep
 
 instance (Index x, Index y) => Representable (Space x y) where
-  type Rep (Space x y) = (Ind x, Ind y)
+  type Rep (Space x y) = (x, y)
   index (Space v) (unwrapI -> x, unwrapI -> y) = v ! y ! x
   tabulate desc = Space $ generate numRows generator
     where
-      numRows = unwrapI (maxBound :: Ind x) + 1
-      numCols = unwrapI (maxBound :: Ind y) + 1
+      numRows = unwrapI (maxBound :: x) + 1
+      numCols = unwrapI (maxBound :: y) + 1
       generator x = generate numCols (\y -> desc (wrapI x, wrapI y))
+
+instance (Index x, Index y) => Distributive (ISpace x y) where
+  distribute = distributeRep
+
+instance (Index x, Index y) => Representable (ISpace x y) where
+  type Rep (ISpace x y) = (x, y)
+  index (ISpace _ s) = index s
+  tabulate desc = ISpace minBound (tabulate desc)
 
 instance (Index x, Index y) => Comonad (ISpace x y) where
   extract (ISpace ind s) = index s ind
@@ -53,22 +62,24 @@ instance (Index x, Index y) => Comonad (ISpace x y) where
     where
       desc focus = ISpace focus v
 
-instance (Index x, Index y) => ComonadEnv (Ind x, Ind y) (ISpace x y) where
-  ask (ISpace foc _) = foc
+instance (Index x, Index y) => ComonadEnv (x, y) (ISpace x y) where
+  ask = pos
 
-moveTo :: (Index x, Index y) => (Ind x, Ind y) -> ISpace x y a -> ISpace x y a
-moveTo foc (ISpace _ v) = ISpace foc v
+instance (Index x, Index y) => ComonadStore (x, y) (ISpace x y) where
+  pos (ISpace foc _) = foc
+  peek = flip index
 
-moveBy :: (Index x, Index y) => (Ind x, Ind y) -> ISpace x y a -> ISpace x y a
-moveBy offs (ISpace curr v)
-  = ISpace (curr + offs) v
+moveBy :: (Index x, Index y) => (x, y) -> ISpace x y a -> ISpace x y a
+moveBy (xOff, yOff) = seeks adjust
+  where
+    adjust (x, y) = (x + xOff, y + yOff)
 
 fromLists :: (Index x, Index y) => [[a]] -> Space x y a
 fromLists xs = Space $ generate (length xs) rows
   where
     rows i = fromList (xs !! i)
 
-g  :: Space Row Col (Ind Row, Ind Col)
+g  :: Space Row Col (Row, Col)
 g = tabulate id
 
 basic :: Disp Row Col Char
