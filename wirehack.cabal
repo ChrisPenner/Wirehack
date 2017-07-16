@@ -16,7 +16,12 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
+                     , Index
   build-depends:       base >= 4.7 && < 5
+                     , vector
+                     , adjunctions
+                     , distributive
+                     , comonad
   default-language:    Haskell2010
 
 executable wirehack-exe
