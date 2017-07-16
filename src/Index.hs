@@ -6,14 +6,14 @@
 {-# language TypeFamilies #-}
 {-# language ExistentialQuantification #-}
 {-# language UndecidableInstances #-}
-module Index where
+module Index (Row, Col, Index(..), Ind) where
 
 import Data.Typeable
 
-newtype Row = Row Int
-newtype Col = Col Int
+data Row
+data Col
 
-newtype Ind t = Ind {fromInd :: Int}
+newtype Ind t = Ind Int
   deriving (Eq, Ord)
 
 instance (Typeable t) => Show (Ind t) where
@@ -29,7 +29,7 @@ instance Bounded (Ind Row) where
 
 instance Enum (Ind t) where
   toEnum = Ind
-  fromEnum = fromInd
+  fromEnum (Ind i) = i
 
 clamp :: (Ord a, Bounded a) => a -> a
 clamp = min maxBound . max minBound
@@ -50,16 +50,15 @@ instance (Num (Ind x), Num (Ind y)) => Num (Ind x, Ind y) where
   signum (x, y) = (signum x, signum y)
   fromInteger = error "Can't Construct Index from single int; use (x, y) instead"
 
-
 class (Bounded (Ind x)) => Index x where
-  wrapI :: Int -> Ind x
   unwrapI :: Ind x -> Int
+  wrapI :: Int -> Ind x
 
 instance Index Col where
-  wrapI = Ind
   unwrapI (Ind c) = c
+  wrapI c = clamp (Ind c)
 
 instance Index Row where
-  wrapI = Ind
-  unwrapI (Ind c) = c
+  unwrapI (Ind r) = r
+  wrapI r = clamp (Ind r)
 

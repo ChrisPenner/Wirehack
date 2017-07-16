@@ -1,9 +1,8 @@
 {-# language DeriveFunctor #-}
-{-# language GeneralizedNewtypeDeriving #-}
-{-# language FlexibleInstances #-}
 {-# language ScopedTypeVariables #-}
 {-# language FlexibleContexts #-}
 {-# language TypeFamilies #-}
+{-# language ViewPatterns #-}
 
 module Lib where
 
@@ -33,12 +32,12 @@ instance (Index x, Index y) => Distributive (Space x y) where
 
 instance (Index x, Index y) => Representable (Space x y) where
   type Rep (Space x y) = (Ind x, Ind y)
-  index (Space _ v) (Ind x, Ind y) = v ! y ! x
+  index (Space _ v) (unwrapI -> x, unwrapI -> y) = v ! y ! x
   tabulate desc = Space minBound $ generate numRows generator
     where
       numRows = unwrapI (maxBound :: Ind x) + 1
       numCols = unwrapI (maxBound :: Ind y) + 1
-      generator x = generate numCols (\y -> desc (Ind x, Ind y))
+      generator x = generate numCols (\y -> desc (wrapI x, wrapI y))
 
 instance (Index x, Index y) => Comonad (Space x y) where
   extract w@(Space f _) = index w f
