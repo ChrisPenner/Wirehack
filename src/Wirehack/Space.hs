@@ -38,13 +38,6 @@ focus = lens getter setter
     getter = extract
     setter (ISpace foc s) new = ISpace foc (s & ix foc .~ new)
 
--- at' :: Lens' (ISpace x y a) a
--- at' = lens getter setter
---   where
---     getter (ISp)= _
---     setter = _
-
-
 data ISpace x y a = ISpace (x, y) (Space x y a)
   deriving (Eq, Functor)
 
@@ -68,9 +61,9 @@ instance (Index x, Index y) => Representable (Space x y) where
   index (Space v) (unwrapI -> x, unwrapI -> y) = v ! y ! x
   tabulate desc = Space $ generate numRows generator
     where
-      numRows = unwrapI (maxBound :: x) + 1
-      numCols = unwrapI (maxBound :: y) + 1
-      generator x = generate numCols (\y -> desc (wrapI x, wrapI y))
+      numCols = unwrapI (maxBound :: x) + 1
+      numRows = unwrapI (maxBound :: y) + 1
+      generator y = generate numCols (\x -> desc (wrapI x, wrapI y))
 
 instance (Index x, Index y) => Distributive (ISpace x y) where
   distribute = distributeRep
@@ -107,5 +100,5 @@ fromLists xs = Space $ generate (length xs) rows
   where
     rows i = fromList (xs !! i)
 
-g  :: ISpace Row Col (Row, Col)
+g  :: ISpace Col Row  (Col, Row)
 g = tabulate id

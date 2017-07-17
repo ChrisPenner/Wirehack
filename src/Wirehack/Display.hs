@@ -1,53 +1,73 @@
+{-# language FlexibleInstances #-}
+{-# language DeriveFunctor #-}
+{-# language ScopedTypeVariables #-}
 module Wirehack.Display where
 
 import Wirehack.Components
 import Wirehack.Space
 import Wirehack.Index
 
-import Data.Monoid
-import Data.Maybe
+import Data.Foldable (toList, fold)
 import Data.Functor.Rep
+import qualified Data.Text as T
 
-import Control.Monad
 import Control.Monad.State
 import Control.Lens hiding (Index, Empty)
+import Control.Exception
 
-import Graphics.Vty as V
+import qualified Graphics.Vty as V
 
-type Cell = Last Component
+data Style a = Highlight a | Default a
+  deriving (Show, Eq, Functor)
 
-type HackM a = StateT (ISpace Row Col Component) IO a
-
-forceComponent :: Space x y Cell -> Space x y Component
-forceComponent = fmap (fromMaybe Empty . getLast)
+type HackM a = StateT (ISpace Col Row Component) IO a
 
 showBoard :: Show a => ISpace x y a -> String
 showBoard (ISpace _ (Space v)) = foldMap ((++ "\n") . foldMap show) v
 
-start :: ISpace Row Col Component
+start :: ISpace Col Row Component
 start = tabulate (const Empty)
 
 disp :: ISpace x y Component -> IO ()
 disp = putStr . showBoard
 
 interrupt :: V.Event
-interrupt = EvKey (KChar 'c') [MCtrl]
+interrupt = V.EvKey (V.KChar 'c') [V.MCtrl]
 
 startGame :: IO ()
-startGame = flip evalStateT (tabulate (const Empty)) $
-  liftIO (mkVty defaultConfig) >>= gameLoop
+startGame = do
+  vty <- V.mkVty V.defaultConfig
+  handle (\(e :: SomeException) -> V.shutdown vty >> print e) $
+    evalStateT (gameLoop vty) (tabulate (const Empty))
 
-toggle :: (Index x, Index y) => ISpace x y Component -> ISpace x y Component
-toggle = focus %~ toggleC
-doMove :: (Index x, Index y) => V.Event -> ISpace x y Component -> ISpace x y Component
-doMove (EvKey (KChar ' ') _) = toggle
-doMove _ = id
+doMove :: V.Event -> HackM ()
+doMove (V.EvKey (V.KChar ' ') _) = focus %= toggleC
+doMove (V.EvKey (V.KChar 'l') _) = modify $ moveBy (1, 0)
+doMove (V.EvKey (V.KChar 'h') _) = modify $ moveBy (-1, 0)
+doMove (V.EvKey (V.KChar 'k') _) = modify $ moveBy (0, -1)
+doMove (V.EvKey (V.KChar 'j') _) = modify $ moveBy (0, 1)
+doMove _ = return ()
 
-
-gameLoop :: Vty -> HackM ()
+gameLoop :: V.Vty -> HackM ()
 gameLoop vty = do
-  e <- liftIO $ nextEvent vty
-  unless (e == interrupt) $ do
-    get >>= liftIO . disp
-    liftIO $ putStrLn "--------------"
-    gameLoop vty
+  st <- get
+  liftIO . V.update vty . V.picForImage $ render (highlight st)
+  e <- liftIO $ V.nextEvent vty
+  doMove e
+  if e == interrupt
+     then liftIO $ V.shutdown vty
+     else gameLoop vty
+  where
+    highlight = (focus %~ toH) . fmap Default
+    toH (Default s) = Highlight s
+    toH x = x
+
+class Renderable a where
+  render :: a -> V.Image
+
+instance Show a => Renderable (Style a) where
+  render (Highlight s) = V.text' (V.withStyle V.defAttr V.reverseVideo) (T.pack $ show s)
+  render (Default s) = V.text' V.defAttr (T.pack $ show s)
+
+instance Renderable a => Renderable (ISpace x y a) where
+  render (ISpace _ (Space v)) = fold $ fmap (V.horizCat . toList . fmap render) v
