@@ -10,7 +10,7 @@ module Space where
 
 import Index
 
-import Data.Vector ((!), generate, Vector, fromList)
+import Data.Vector as V ((!), generate, Vector, fromList, zipWith)
 import Data.List (intercalate)
 import Data.Foldable (toList)
 import Data.Monoid
@@ -68,6 +68,10 @@ instance (Index x, Index y) => ComonadEnv (x, y) (ISpace x y) where
 instance (Index x, Index y) => ComonadStore (x, y) (ISpace x y) where
   pos (ISpace foc _) = foc
   peek = flip index
+
+instance (Monoid a, Index x, Index y) => Monoid (Space x y a) where
+  mempty = tabulate (const mempty)
+  Space v `mappend` Space v' = Space (V.zipWith (V.zipWith mappend) v v')
 
 moveBy :: (Index x, Index y) => (x, y) -> ISpace x y a -> ISpace x y a
 moveBy (xOff, yOff) = seeks adjust
