@@ -1,6 +1,6 @@
 module Main where
 
--- import Lib
+import Wirehack.Display
 
 main :: IO ()
-main = print "hi"
+main = startGame

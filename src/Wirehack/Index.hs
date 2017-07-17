@@ -2,7 +2,7 @@
 {-# language UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Index (Row, Col, Index(..), row, col) where
+module Wirehack.Index (Row, Col, Index(..), row, col) where
 
 newtype Row = Row Int
   deriving (Show, Eq, Ord)
@@ -16,7 +16,7 @@ class (Bounded x, Ord x, Num x) => Index x where
 
 instance Bounded Col where
   minBound = Col 0
-  maxBound = Col 3
+  maxBound = Col 5
 
 instance Bounded Row where
   minBound = Row 0
