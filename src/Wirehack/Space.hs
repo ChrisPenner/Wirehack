@@ -90,10 +90,10 @@ instance (Monoid a, Index x, Index y) => Monoid (Space x y a) where
   mempty = tabulate (const mempty)
   Space v `mappend` Space v' = Space (V.zipWith (V.zipWith mappend) v v')
 
-moveBy :: (Index x, Index y) => (x, y) -> ISpace x y a -> ISpace x y a
-moveBy (xOff, yOff) = seeks adjust
+moveBy :: (Index x, Index y) => (Int, Int) -> ISpace x y a -> ISpace x y a
+moveBy offs = seeks adjust
   where
-    adjust (x, y) = (x + xOff, y + yOff)
+    adjust cur = addInd cur offs
 
 fromLists :: (Index x, Index y) => [[a]] -> Space x y a
 fromLists xs = Space $ generate (length xs) rows
