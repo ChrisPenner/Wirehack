@@ -19,6 +19,7 @@ library
                      , Wirehack.Index
                      , Wirehack.Components
                      , Wirehack.Display
+                     , Wirehack.Neighbours
                      , Wirehack
   build-depends:       base >= 4.7 && < 5
                      , vector

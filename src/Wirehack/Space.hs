@@ -5,6 +5,7 @@
 {-# language ViewPatterns #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
+{-# language GADTs #-}
 
 module Wirehack.Space where
 
@@ -44,8 +45,14 @@ data ISpace x y a = ISpace (x, y) (Space x y a)
 instance (Show a, Show x, Show y, Typeable x, Typeable y) => Show (ISpace x y a) where
   show (ISpace foc (Space v)) = "Foc: " ++ show foc ++ "\n" ++ foldMap ((<> "\n"). show) v
 
-newtype Space x y a = Space (Vector (Vector a))
-  deriving (Eq, Functor)
+data Space x y a where
+  Space :: (Index x, Index y) => Vector (Vector a) -> Space x y a
+
+instance Eq a => Eq (Space x y a) where
+  (Space v) == (Space v') = v == v'
+
+instance Functor (Space x y) where
+  fmap f (Space v) = Space (fmap f <$> v)
 
 instance Foldable (Space x y) where
   foldMap f (Space v) = foldMap (foldMap f) v
