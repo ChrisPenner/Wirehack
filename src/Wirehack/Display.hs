@@ -6,6 +6,7 @@ module Wirehack.Display where
 import Wirehack.Components
 import Wirehack.Space
 import Wirehack.Index
+import Wirehack.Neighbours
 
 import Data.Foldable (toList, fold)
 import Data.Functor.Rep
@@ -42,10 +43,10 @@ startGame = do
 
 doMove :: V.Event -> HackM ()
 doMove (V.EvKey (V.KChar ' ') _) = focus %= toggleC
-doMove (V.EvKey (V.KChar 'l') _) = modify $ moveBy (1, 0)
-doMove (V.EvKey (V.KChar 'h') _) = modify $ moveBy (-1, 0)
-doMove (V.EvKey (V.KChar 'k') _) = modify $ moveBy (0, -1)
-doMove (V.EvKey (V.KChar 'j') _) = modify $ moveBy (0, 1)
+doMove (V.EvKey (V.KChar 'l') _) = modify $ move R
+doMove (V.EvKey (V.KChar 'h') _) = modify $ move L
+doMove (V.EvKey (V.KChar 'k') _) = modify $ move U
+doMove (V.EvKey (V.KChar 'j') _) = modify $ move D
 doMove _ = return ()
 
 gameLoop :: V.Vty -> HackM ()
