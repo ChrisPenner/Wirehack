@@ -1,9 +1,11 @@
+{-# language TypeFamilies #-}
+{-# language ViewPatterns #-}
 module Wirehack.Neighbours where
 
 import Wirehack.Space
-import Wirehack.Index
 
-import Control.Comonad.Store (pos, peek, seeks)
+import Control.Comonad.Store
+import Data.Functor.Rep
 
 data Dir = L | R | U | D
   deriving (Show, Eq)
@@ -14,13 +16,12 @@ indOf D = (0, 1)
 indOf L = (-1, 0)
 indOf R = (1, 0)
 
-nearby :: (Index x, Index y, Monoid a) => Dir -> ISpace x y a -> a
-nearby dir spc =
-  let l = addInd (pos spc) (indOf dir)
-   in if pos spc == l
-         then mempty
-         else peek l spc
+addTup :: (Num x, Num y) => (x, y) -> (x, y) -> (x, y)
+addTup (x, y) (offX, offY) = (x + offX, y + offY)
 
-move :: (Index x, Index y) => Dir -> ISpace x y a -> ISpace x y a
-move dir = seeks (flip addInd (indOf dir))
+nearby :: ((Int, Int) ~ Rep r) => Dir -> ISpace r a -> a
+nearby (indOf -> offsets) = peeks (addTup offsets)
+
+move :: ((Int, Int) ~ Rep r) => Dir -> ISpace r a -> ISpace r a
+move (indOf -> offsets) = seeks (addTup offsets)
 

@@ -2,105 +2,113 @@
 {-# language ScopedTypeVariables #-}
 {-# language FlexibleContexts #-}
 {-# language TypeFamilies #-}
-{-# language ViewPatterns #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
 {-# language GADTs #-}
+{-# language ConstraintKinds #-}
+{-# language UndecidableInstances #-}
+{-# language RankNTypes #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Wirehack.Space where
 
-import Wirehack.Index
-
-import Data.Vector as V ((!), generate, Vector, fromList, zipWith)
-import Data.Monoid
 import Data.Distributive
 import Data.Functor.Rep
-import Data.Typeable
+import Data.Functor.Compose
+import Data.Monoid
+import qualified Data.Stream.Infinite as S
 
+import Control.Arrow
 import Control.Comonad
 import Control.Comonad.Env
 import Control.Comonad.Store
 
 import Control.Lens hiding (Index, index)
-import qualified Control.Lens.At as I
 
-type instance I.Index (Space x y a) = Rep (Space x y)
-type instance I.IxValue (Space x y a) = a
+type D2 = Compose Space Space
 
-instance (Index x, Index y) => I.Ixed (Space x y a) where
-  ix ind@(x, y) = lens getter setter
+overS :: (a -> a) -> Int -> S.Stream a -> S.Stream a
+overS f 0 (x S.:> xs) = f x S.:> xs
+overS f n (x S.:> xs)
+  | n > 0 = x S.:> overS f (n - 1) xs
+  | otherwise = error "Negative index in overS"
+
+class (Representable r) => RepLens r where
+  coord :: Rep r -> Lens' (r a) a
+
+instance RepLens Space where
+  coord ind = lens getter setter
     where
-      getter s = index s ind
-      setter (Space v) new = Space (v & ix (unwrapI y) . ix (unwrapI x) .~ new)
+      getter = flip index ind
+      setter (Space l r) new =
+        if ind >= 0
+            then Space l (overS (const new) ind r)
+            else Space (overS (const new) (abs ind) l) r
 
-focus :: (Index x, Index y) => Lens' (ISpace x y a) a
+instance (RepLens r, RepLens s)  => RepLens (Compose r s) where
+  coord (indR, indS) = lens getter setter
+    where
+      getter (Compose rsa) = rsa ^. coord indR . coord indS
+      setter (Compose rsa) new = Compose (rsa & coord indR %~ (coord indS .~ new))
+
+focus :: (RepLens r) => Lens' (ISpace r a) a
 focus = lens getter setter
   where
     getter = extract
-    setter (ISpace foc s) new = ISpace foc (s & ix foc .~ new)
+    setter (ISpace foc s) new = ISpace foc (s & coord foc .~ new)
 
-data ISpace x y a = ISpace (x, y) (Space x y a)
-  deriving (Eq, Functor)
+data Space a = Space
+        (S.Stream a)
+        (S.Stream a)
+        deriving Functor
 
-instance (Show a, Show x, Show y, Typeable x, Typeable y) => Show (ISpace x y a) where
-  show (ISpace foc (Space v)) = "Foc: " ++ show foc ++ "\n" ++ foldMap ((<> "\n"). show) v
-
-data Space x y a where
-  Space :: (Index x, Index y) => Vector (Vector a) -> Space x y a
-
-instance Eq a => Eq (Space x y a) where
-  (Space v) == (Space v') = v == v'
-
-instance Functor (Space x y) where
-  fmap f (Space v) = Space (fmap f <$> v)
-
-instance Foldable (Space x y) where
-  foldMap f (Space v) = foldMap (foldMap f) v
-
-instance (Show a, Typeable x, Typeable y) => Show (Space x y a) where
-  show (Space v) = foldMap ((<> "\n"). show) v
-
-instance (Index x, Index y) => Distributive (Space x y) where
+instance Distributive Space where
   distribute = distributeRep
 
-instance (Index x, Index y) => Representable (Space x y) where
-  type Rep (Space x y) = (x, y)
-  index (Space v) (unwrapI -> x, unwrapI -> y) = v ! y ! x
-  tabulate desc = Space $ generate numRows generator
-    where
-      numCols = unwrapI (maxBound :: x) + 1
-      numRows = unwrapI (maxBound :: y) + 1
-      generator y = generate numCols (\x -> desc (wrapI x, wrapI y))
+instance Representable Space where
+  type Rep Space = Int
+  index (Space l r) i
+    | i >= 0 = r S.!! i
+    | otherwise = l S.!! (abs i - 1)
 
-instance (Index x, Index y) => Distributive (ISpace x y) where
-  distribute = distributeRep
+  tabulate desc = Space (S.unfold (desc &&& subtract 1) (-1)) (S.unfold (desc &&& (+1)) 0)
 
-instance (Index x, Index y) => Representable (ISpace x y) where
-  type Rep (ISpace x y) = (x, y)
-  index (ISpace _ s) = index s
-  tabulate desc = ISpace minBound (tabulate desc)
+data ISpace r a where
+  ISpace :: Representable r => Rep r -> r a -> ISpace r a
 
-instance (Index x, Index y) => Comonad (ISpace x y) where
+getSpace :: (Representable r) => ISpace r a -> r a
+getSpace (ISpace _ r) = r
+
+
+instance Functor (ISpace r) where
+  fmap f (ISpace foc r) = ISpace foc (fmap f r)
+
+instance Comonad (ISpace r) where
   extract (ISpace ind s) = index s ind
   duplicate (ISpace foc v) = ISpace foc $ tabulate desc
     where
       desc fc = ISpace fc v
 
-instance (Index x, Index y) => ComonadEnv (x, y) (ISpace x y) where
+instance (s ~ Rep r) => ComonadStore s (ISpace r) where
+  pos (ISpace foc _) = foc
+  peek foc (ISpace _ r) = index r foc
+
+instance (e ~ Rep r) => ComonadEnv e (ISpace r) where
   ask = pos
 
-instance (Index x, Index y) => ComonadStore (x, y) (ISpace x y) where
-  pos (ISpace foc _) = foc
-  peek = flip index
-
-instance (Monoid a, Index x, Index y) => Monoid (Space x y a) where
+instance (Monoid a) => Monoid (S.Stream a) where
   mempty = tabulate (const mempty)
-  Space v `mappend` Space v' = Space (V.zipWith (V.zipWith mappend) v v')
+  mappend = S.zipWith mappend
 
-fromLists :: (Index x, Index y) => [[a]] -> Space x y a
-fromLists xs = Space $ generate (length xs) rows
-  where
-    rows i = fromList (xs !! i)
+instance (Monoid a) => Monoid (Space a) where
+  mempty = tabulate (const mempty)
+  Space l r `mappend` Space l' r' = Space (l <> l') (r <> r')
 
-g  :: ISpace Col Row  (Col, Row)
-g = tabulate id
+idISpace :: ISpace D2 (Int, Int)
+idISpace = ISpace (0, 0) idD2
+
+idD2 :: D2 (Int, Int)
+idD2 = tabulate id
+
+idSpace :: Space Int
+idSpace = tabulate id
