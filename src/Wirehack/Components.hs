@@ -1,11 +1,12 @@
 module Wirehack.Components where
 
-data Component = Empty | All
+data Component = Empty | Up | Down
   deriving (Eq)
 
 instance Show Component where
   show Empty = "."
-  show All = "+"
+  show Up = "U"
+  show Down = "D"
 
 instance Monoid Component where
   mempty = Empty
@@ -13,5 +14,6 @@ instance Monoid Component where
   _ `mappend` x = x
 
 toggleC :: Component -> Component
-toggleC Empty = All
-toggleC All = Empty
+toggleC Empty = Up
+toggleC Up = Down
+toggleC Down = Empty

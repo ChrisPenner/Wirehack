@@ -27,7 +27,7 @@ import Control.Lens hiding (Index, index)
 
 type D2 = Compose Space Space
 
-overS :: (a -> a) -> Int -> S.Stream a -> S.Stream a
+overS :: (a -> a) -> Rep S.Stream -> S.Stream a -> S.Stream a
 overS f 0 (x S.:> xs) = f x S.:> xs
 overS f n (x S.:> xs)
   | n > 0 = x S.:> overS f (n - 1) xs
@@ -36,14 +36,18 @@ overS f n (x S.:> xs)
 class (Representable r) => RepLens r where
   coord :: Rep r -> Lens' (r a) a
 
+instance Enum e => Enum (Sum e) where
+  toEnum = Sum . toEnum
+  fromEnum  = fromEnum . getSum
+
 instance RepLens Space where
   coord ind = lens getter setter
     where
       getter = flip index ind
       setter (Space l r) new =
-        if ind >= 0
-            then Space l (overS (const new) ind r)
-            else Space (overS (const new) (abs ind) l) r
+        if ind >= Sum 0
+           then Space l (overS (const new) (getSum ind) r)
+           else Space (overS (const new) (getSum $ abs ind) l) r
 
 instance (RepLens r, RepLens s)  => RepLens (Compose r s) where
   coord (indR, indS) = lens getter setter
@@ -62,14 +66,18 @@ data Space a = Space
         (S.Stream a)
         deriving Functor
 
+instance Applicative Space where
+  pure = pureRep
+  (<*>) = apRep
+
 instance Distributive Space where
   distribute = distributeRep
 
 instance Representable Space where
-  type Rep Space = Int
+  type Rep Space = Sum Int
   index (Space l r) i
-    | i >= 0 = r S.!! i
-    | otherwise = l S.!! (abs i - 1)
+    | i >= 0 = index r (getSum i)
+    | otherwise = index l (getSum (abs i - 1))
 
   tabulate desc = Space (S.unfold (desc &&& subtract 1) (-1)) (S.unfold (desc &&& (+1)) 0)
 
@@ -104,11 +112,11 @@ instance (Monoid a) => Monoid (Space a) where
   mempty = tabulate (const mempty)
   Space l r `mappend` Space l' r' = Space (l <> l') (r <> r')
 
-idISpace :: ISpace D2 (Int, Int)
+idISpace :: ISpace D2 (Rep D2)
 idISpace = ISpace (0, 0) idD2
 
-idD2 :: D2 (Int, Int)
+idD2 :: D2 (Rep D2)
 idD2 = tabulate id
 
-idSpace :: Space Int
+idSpace :: Space (Rep Space)
 idSpace = tabulate id

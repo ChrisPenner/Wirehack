@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Wirehack.Space
                      , Wirehack.Components
+                     , Wirehack.Turn
                      , Wirehack.Display
                      , Wirehack.Neighbours
                      , Wirehack
