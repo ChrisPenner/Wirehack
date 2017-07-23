@@ -2,6 +2,7 @@
 {-# language ScopedTypeVariables #-}
 {-# language FlexibleContexts #-}
 {-# language ViewPatterns #-}
+{-# language TupleSections #-}
 module Wirehack.Display where
 
 import Wirehack.Components
@@ -60,7 +61,7 @@ doMove _ = return ()
 gameLoop :: V.Vty -> HackM ()
 gameLoop vty = do
   st <- get
-  let img = render . getRange board . getSpace $ highlight st
+  let img = render . getRange board . getSpace .  highlight . colorize . attrs $ st
   liftIO . V.update vty . V.picForImage $ img
   e <- liftIO $ V.nextEvent vty
   doMove e
@@ -68,20 +69,24 @@ gameLoop vty = do
      then liftIO $ V.shutdown vty
      else gameLoop vty
   where
-    highlight = (focus . _1 <>~ highlighting) . fmap ((,) V.defAttr)
-    highlighting  = V.withStyle V.defAttr V.reverseVideo
+    highlight = focus . _1 <>~ highlighting
+    highlighting  = V.withStyle V.currentAttr V.reverseVideo
 
 render :: Show a => [[(V.Attr, a)]] -> V.Image
 render = V.vertCat . fmap (V.horizCat . fmap rep)
   where
     rep (attr, T.pack . show -> txt) = V.text' attr txt
 
-highlight :: ISpace D2 (V.Attr, Component) -> ISpace D2 (V.Attr, Component)
-highlight w@(ISpace foc spc) = ISpace foc $ liftA2 combine (fmap color valid) spc
+attrs :: Functor f => f a -> f (V.Attr, a)
+attrs = fmap (V.defAttr,)
+
+
+colorize :: ISpace D2 (V.Attr, Component) -> ISpace D2 (V.Attr, Component)
+colorize w@(ISpace foc spc) = ISpace foc $ liftA2 combine (fmap color valid) spc
   where
-    combine a (a', x) = (a <> a', x)
-    valid :: D2 Bool
+    combine a (a', x) = (a' <> a, x)
     valid = getSpace . validate . fmap snd $ w
-    color True = V.withForeColor V.defAttr V.green
-    color False = V.withForeColor V.defAttr V.red
+    color Good = V.withForeColor V.defAttr V.green
+    color Bad = V.withForeColor V.defAttr V.red
+    color Neutral = V.currentAttr
 

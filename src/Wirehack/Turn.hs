@@ -7,11 +7,12 @@ import Wirehack.Components
 import Wirehack.Neighbours
 import Control.Comonad
 
-validate :: ISpace D2 Component -> ISpace D2 Bool
+data Status = Good | Bad | Neutral
+
+validate :: ISpace D2 Component -> ISpace D2 Status
 validate = extend go
   where
-    go spc =
-      case extract spc of
-        Up -> nearby U spc == Down
-        Down -> nearby D spc == Up
-        Empty -> True
+    go w = case extract w of
+             Up -> if nearby U w == Down then Good else Bad
+             Down -> if nearby D w == Up then Good else Bad
+             Empty -> Neutral
