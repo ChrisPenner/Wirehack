@@ -26,10 +26,7 @@ type HackM a = StateT (ISpace D2 Component) IO a
 type Range r = (Rep r, Rep r)
 
 board :: Range D2
-board = ((0, 0), (10, 10))
-
--- getRange :: Representable r => r a -> [Rep r] -> [a]
--- getRange = fmap . index
+board = ((0, 0), (60, 30))
 
 getRange :: (Show a) => Range D2 -> D2 a -> [[a]]
 getRange ((lowX, lowY), (highX, highY)) r =
@@ -51,7 +48,12 @@ startGame = do
     evalStateT (gameLoop vty) start
 
 doMove :: V.Event -> HackM ()
-doMove (V.EvKey (V.KChar ' ') _) = focus %= toggleC
+doMove (V.EvKey V.KEnter _)      = focus .= Source
+doMove (V.EvKey (V.KChar ' ') _) = focus .= Empty
+doMove (V.EvKey (V.KChar 'H') _) = focus .= PLeft
+doMove (V.EvKey (V.KChar 'J') _) = focus .= PDown
+doMove (V.EvKey (V.KChar 'K') _) = focus .= PUp
+doMove (V.EvKey (V.KChar 'L') _) = focus .= PRight
 doMove (V.EvKey (V.KChar 'l') _) = modify $ move R
 doMove (V.EvKey (V.KChar 'h') _) = modify $ move L
 doMove (V.EvKey (V.KChar 'k') _) = modify $ move U
@@ -80,7 +82,6 @@ render = V.vertCat . fmap (V.horizCat . fmap rep)
 attrs :: Functor f => f a -> f (V.Attr, a)
 attrs = fmap (V.defAttr,)
 
-
 colorize :: ISpace D2 (V.Attr, Component) -> ISpace D2 (V.Attr, Component)
 colorize w@(ISpace foc spc) = ISpace foc $ liftA2 combine (fmap color valid) spc
   where
@@ -90,3 +91,14 @@ colorize w@(ISpace foc spc) = ISpace foc $ liftA2 combine (fmap color valid) spc
     color Bad = V.withForeColor V.defAttr V.red
     color Neutral = V.currentAttr
 
+
+
+
+-- idISpace :: ISpace D2 (Rep D2)
+-- idISpace = ISpace (0, 0) idD2
+
+-- idD2 :: D2 (Rep D2)
+-- idD2 = tabulate id
+
+-- idSpace :: Space (Rep Space)
+-- idSpace = tabulate id

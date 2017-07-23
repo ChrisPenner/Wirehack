@@ -1,11 +1,8 @@
 {-# language DeriveFunctor #-}
-{-# language ScopedTypeVariables #-}
-{-# language FlexibleContexts #-}
 {-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
 {-# language GADTs #-}
-{-# language ConstraintKinds #-}
 {-# language UndecidableInstances #-}
 {-# language RankNTypes #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -112,11 +109,3 @@ instance (Monoid a) => Monoid (Space a) where
   mempty = tabulate (const mempty)
   Space l r `mappend` Space l' r' = Space (l <> l') (r <> r')
 
-idISpace :: ISpace D2 (Rep D2)
-idISpace = ISpace (0, 0) idD2
-
-idD2 :: D2 (Rep D2)
-idD2 = tabulate id
-
-idSpace :: Space (Rep Space)
-idSpace = tabulate id
