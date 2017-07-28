@@ -9,6 +9,7 @@ import Wirehack.Components
 import Wirehack.Space
 import Wirehack.Neighbours
 import Wirehack.Turn
+import Wirehack.Dim
 
 import Data.Functor.Rep
 import qualified Data.Text as T
@@ -23,17 +24,10 @@ import qualified Graphics.Vty as V
 
 type HackM a = StateT (ISpace D2 Component) IO a
 
-type Range r = (Rep r, Rep r)
+type RangeI r = (Rep r, Rep r)
 
-board :: Range D2
+board :: RangeI D2
 board = ((0, 0), (60, 30))
-
-getRange :: (Show a) => Range D2 -> D2 a -> [[a]]
-getRange ((lowX, lowY), (highX, highY)) r =
-  fmap (index r) <$> [[(x, y) | x <- [lowX..highX]] | y <- [lowY..highY]]
-
-showRange :: Show a => [[a]] -> String
-showRange = unlines . fmap (foldMap show)
 
 start :: ISpace D2 Component
 start = ISpace (0, 0) (tabulate (const Empty))
@@ -63,7 +57,7 @@ doMove _ = return ()
 gameLoop :: V.Vty -> HackM ()
 gameLoop vty = do
   st <- get
-  let img = render . getRange board . getSpace .  highlight . colorize . attrs $ st
+  let img = render . getRange board .  getSpace .  highlight . colorize . attrs $ st
   liftIO . V.update vty . V.picForImage $ img
   e <- liftIO $ V.nextEvent vty
   doMove e

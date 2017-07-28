@@ -12,10 +12,10 @@ data Dir = L | R | U | D
   deriving (Show, Eq)
 
 indOf :: Dir -> (Sum Int, Sum Int)
-indOf U = (0, -1)
-indOf D = (0, 1)
-indOf L = (-1, 0)
-indOf R = (1, 0)
+indOf U = (-1, 0)
+indOf D = (1, 0)
+indOf L = (0, -1)
+indOf R = (0, 1)
 
 nearby :: ((Sum Int, Sum Int) ~ Rep r) => Dir -> ISpace r a -> a
 nearby (indOf -> offsets) = peeks (mappend offsets)
