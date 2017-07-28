@@ -19,6 +19,7 @@ library
                      , Wirehack.Components
                      , Wirehack.Turn
                      , Wirehack.Display
+                     , Wirehack.Dim
                      , Wirehack.Neighbours
                      , Wirehack
   build-depends:       base >= 4.7 && < 5

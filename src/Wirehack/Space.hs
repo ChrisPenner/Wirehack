@@ -84,7 +84,6 @@ data ISpace r a where
 getSpace :: (Representable r) => ISpace r a -> r a
 getSpace (ISpace _ r) = r
 
-
 instance Functor (ISpace r) where
   fmap f (ISpace foc r) = ISpace foc (fmap f r)
 
