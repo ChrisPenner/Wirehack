@@ -23,6 +23,7 @@ import Control.Comonad.Store
 import Control.Lens hiding (Index, index)
 
 type D2 = Compose Space Space
+type D3 = Compose Space (Compose Space Space)
 
 overS :: (a -> a) -> Rep S.Stream -> S.Stream a -> S.Stream a
 overS f 0 (x S.:> xs) = f x S.:> xs

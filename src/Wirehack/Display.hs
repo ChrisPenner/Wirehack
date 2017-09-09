@@ -12,6 +12,7 @@ import Wirehack.Turn
 import Wirehack.Dim
 
 import Data.Functor.Rep
+import Data.Functor.Compose
 import qualified Data.Text as T
 
 import Control.Applicative
@@ -68,8 +69,8 @@ gameLoop vty = do
     highlight = focus . _1 <>~ highlighting
     highlighting  = V.withStyle V.currentAttr V.reverseVideo
 
-render :: Show a => [[(V.Attr, a)]] -> V.Image
-render = V.vertCat . fmap (V.horizCat . fmap rep)
+render :: Show a => Compose [] [] (V.Attr, a) -> V.Image
+render = V.vertCat . fmap (V.horizCat . fmap rep) . getCompose
   where
     rep (attr, T.pack . show -> txt) = V.text' attr txt
 

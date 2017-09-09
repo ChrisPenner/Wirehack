@@ -12,6 +12,7 @@ data Dir = L | R | U | D
   deriving (Show, Eq)
 
 indOf :: Dir -> (Sum Int, Sum Int)
+-- indOf :: (BaseOf (Rep s) ~ Sum Int, Representable s) => Dir -> (Sum Int, Sum Int)
 indOf U = (-1, 0)
 indOf D = (1, 0)
 indOf L = (0, -1)
