@@ -23,44 +23,44 @@ data Nat = S Nat | Z
 --   Rep (Comp f) = (Rep f, Rep)
 
 data Comp (n :: Nat) (f :: * -> *) a where
-  CompC :: f (Comp n f a) -> Comp (S n) f a
-  CompF :: f a -> Comp Z f a
+  CompC :: f (Comp n f a) -> Comp ('S n) f a
+  CompF :: f a -> Comp 'Z f a
 
 
 instance (Functor f) => Functor (Comp n f) where
   fmap f (CompF fa) = CompF $ fmap f fa
   fmap f (CompC fa) = CompC $ fmap f <$> fa
 
-instance Representable f => Distributive (Comp Z f) where
+instance Representable f => Distributive (Comp 'Z f) where
   distribute = distributeRep
 
-instance Representable f => Distributive (Comp (S n) f) where
+instance Representable f => Distributive (Comp ('S n) f) where
   distribute = undefined -- distributeRep
 
-instance Representable f => Representable (Comp Z f) where
-  type Rep (Comp Z f) = RepOf (Comp Z f)
+instance Representable f => Representable (Comp 'Z f) where
+  type Rep (Comp 'Z f) = RepOf (Comp 'Z f)
   index (CompF fa) = index fa
   tabulate desc = CompF (tabulate desc)
 
 -- instance (Representable f
 --          , Representable (Comp n f)
---          , Rep (Comp (S n) f) ~ (Rep f, Rep (Comp n f))
---          ) => Representable (Comp (S n) f) where
---   type Rep (Comp (S n) f) = RepOf (Comp (S n) f)
+--          , Rep (Comp ('S n) f) ~ (Rep f, Rep (Comp n f))
+--          ) => Representable (Comp ('S n) f) where
+--   type Rep (Comp ('S n) f) = RepOf (Comp ('S n) f)
 --   index (CompC fs) (i, rest) = index (index fs i) rest
 --   tabulate desc = CompC (tabulate (\i -> desc (i, tabulate _)))
 
 
 type family CountComp f :: Nat where
-  CountComp (g c) = S (CountComp c)
-  CountComp c = Z
+  CountComp (g c) = 'S (CountComp c)
+  CountComp c = 'Z
 
 type family RepOf c where
   RepOf (Comp n f) = CompRep n f
 
 type family CompRep (n :: Nat) r where
-  CompRep Z x = Rep x
-  CompRep (S n) x = (Rep x, CompRep n x)
+  CompRep 'Z x = Rep x
+  CompRep ('S n) x = (Rep x, CompRep n x)
 
 class (Representable r, Representable s) => Promote r s where
   liftInd :: Rep r -> Rep s
