@@ -1,111 +1,55 @@
 {-# language DeriveFunctor #-}
-{-# language TypeFamilies #-}
 {-# language FlexibleInstances #-}
 {-# language MultiParamTypeClasses #-}
-{-# language GADTs #-}
-{-# language UndecidableInstances #-}
-{-# language RankNTypes #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
+{-# language TypeFamilies #-}
+{-# language DataKinds #-}
+{-# language ScopedTypeVariables #-}
 module Wirehack.Space where
 
 import Data.Distributive
 import Data.Functor.Rep
-import Data.Functor.Compose
-import Data.Monoid
-import qualified Data.Stream.Infinite as S
-
-import Control.Arrow
 import Control.Comonad
 import Control.Comonad.Env
-import Control.Comonad.Store
+import Data.Functor.Compose
+import Data.Monoid
+import Data.Vector as V
+import Control.Lens hiding (index)
+import qualified Data.Stream.Infinite as S
+import GHC.TypeLits
+import Data.Proxy
 
-import Control.Lens hiding (Index, index)
+import Control.Comonad.Representable.Store
 
-type D2 = Compose Space Space
-type D3 = Compose Space (Compose Space Space)
+data ISpace width height a = ISpace (Sum Int, Sum Int) (Space width height a)
+  deriving Functor
+data Space (width :: Nat) (height :: Nat) a = Space (Vector (Vector a))
+  deriving Functor
 
-overS :: (a -> a) -> Rep S.Stream -> S.Stream a -> S.Stream a
-overS f 0 (x S.:> xs) = f x S.:> xs
-overS f n (x S.:> xs)
-  | n > 0 = x S.:> overS f (n - 1) xs
-  | otherwise = error "Negative index in overS"
+instance (KnownNat width, KnownNat height) => Comonad (ISpace width height) where
+  extract (ISpace ind spc) = index spc ind
+  extend f (ISpace ind spc) =
+    ISpace ind (tabulate (\ix -> f (ISpace ix spc)))
 
-class (Representable r) => RepLens r where
-  coord :: Rep r -> Lens' (r a) a
+instance (KnownNat width, KnownNat height) => ComonadStore (Sum Int, Sum Int) (ISpace width height) where
+  pos (ISpace ind _) = ind
+  peek ind (ISpace _ spc) = index spc ind
 
-instance Enum e => Enum (Sum e) where
-  toEnum = Sum . toEnum
-  fromEnum  = fromEnum . getSum
+instance (KnownNat width, KnownNat height) => Distributive (Space width height) where
+  distribute = distributeRep
 
-instance RepLens Space where
-  coord ind = lens getter setter
+instance (KnownNat width, KnownNat height) => Representable (Space width height) where
+  type Rep (Space x y) = (Sum Int, Sum Int)
+  index (Space spc) (Sum x, Sum y) = spc ! x ! y
+  tabulate f = Space $ V.generate width (\ x -> V.generate height (\y -> f (Sum x, Sum y)))
     where
-      getter = flip index ind
-      setter (Space l r) new =
-        if ind >= Sum 0
-           then Space l (overS (const new) (getSum ind) r)
-           else Space (overS (const new) (getSum $ abs ind) l) r
+      width = fromIntegral $ natVal (Proxy :: Proxy width)
+      height = fromIntegral $ natVal (Proxy :: Proxy height)
 
-instance (RepLens r, RepLens s)  => RepLens (Compose r s) where
-  coord (indR, indS) = lens getter setter
-    where
-      getter (Compose rsa) = rsa ^. coord indR . coord indS
-      setter (Compose rsa) new = Compose (rsa & coord indR %~ (coord indS .~ new))
-
-focus :: (RepLens r) => Lens' (ISpace r a) a
+focus :: (KnownNat w, KnownNat h) => Lens' (ISpace w h a) a
 focus = lens getter setter
   where
     getter = extract
-    setter (ISpace foc s) new = ISpace foc (s & coord foc .~ new)
-
-data Space a = Space
-        (S.Stream a)
-        (S.Stream a)
-        deriving Functor
-
-instance Applicative Space where
-  pure = pureRep
-  (<*>) = apRep
-
-instance Distributive Space where
-  distribute = distributeRep
-
-instance Representable Space where
-  type Rep Space = Sum Int
-  index (Space l r) i
-    | i >= 0 = index r (getSum i)
-    | otherwise = index l (getSum (abs i - 1))
-
-  tabulate desc = Space (S.unfold (desc &&& subtract 1) (-1)) (S.unfold (desc &&& (+1)) 0)
-
-data ISpace r a where
-  ISpace :: Representable r => Rep r -> r a -> ISpace r a
-
-getSpace :: (Representable r) => ISpace r a -> r a
-getSpace (ISpace _ r) = r
-
-instance Functor (ISpace r) where
-  fmap f (ISpace foc r) = ISpace foc (fmap f r)
-
-instance Comonad (ISpace r) where
-  extract (ISpace ind s) = index s ind
-  duplicate (ISpace foc v) = ISpace foc $ tabulate desc
-    where
-      desc fc = ISpace fc v
-
-instance (s ~ Rep r) => ComonadStore s (ISpace r) where
-  pos (ISpace foc _) = foc
-  peek foc (ISpace _ r) = index r foc
-
-instance (e ~ Rep r) => ComonadEnv e (ISpace r) where
-  ask = pos
-
-instance (Monoid a) => Monoid (S.Stream a) where
-  mempty = tabulate (const mempty)
-  mappend = S.zipWith mappend
-
-instance (Monoid a) => Monoid (Space a) where
-  mempty = tabulate (const mempty)
-  Space l r `mappend` Space l' r' = Space (l <> l') (r <> r')
-
+    setter (ISpace ind@(Sum x, Sum y) (Space spc)) new = ISpace ind . Space $ spc // [(x, newInner)]
+      where
+        nestedVal = spc ! x
+        newInner = nestedVal // [(y, new)]
