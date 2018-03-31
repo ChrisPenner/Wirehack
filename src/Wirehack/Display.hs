@@ -11,7 +11,7 @@ import Wirehack.Space
 import Wirehack.Neighbours
 import Wirehack.Turn
 
-import Data.Vector (toList)
+import Data.Vector (Vector)
 import Data.Functor.Rep
 import qualified Data.Text as T
 
@@ -67,8 +67,12 @@ gameLoop vty = do
     highlighting  = V.withStyle V.currentAttr V.reverseVideo
 
 render :: Show a => ISpace w h (V.Attr, a) -> V.Image
-render (ISpace _ (Space spc)) = V.vertCat . fmap (V.horizCat . fmap rep) . toList . fmap toList $  spc
+render (ISpace _ (Space spc)) =
+  foldr (V.vertJoin . foldInner) V.emptyImage $  spc
   where
+    foldInner :: Show a => Vector (V.Attr, a) -> V.Image
+    foldInner = foldr (V.horizJoin . rep) V.emptyImage
+    rep :: Show a => (V.Attr, a) -> V.Image
     rep (attr, T.pack . show -> txt) = V.text' attr txt
 
 attrs :: Functor f => f a -> f (V.Attr, a)
@@ -82,15 +86,3 @@ colorize spc = liftA2 combine (color <$> valid) spc
     color Good = V.withForeColor V.defAttr V.green
     color Bad = V.withForeColor V.defAttr V.red
     color Neutral = V.currentAttr
-
-
-
-
--- idISpace :: Space (Rep D2)
--- idISpace = Space (0, 0) idD2
-
--- idD2 :: (Rep D2)
--- idD2 = tabulate id
-
--- idSpace :: Space (Rep Space)
--- idSpace = tabulate id
