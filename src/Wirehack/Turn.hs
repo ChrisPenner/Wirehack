@@ -9,7 +9,7 @@ import Control.Comonad
 
 data Status = Good | Bad | Neutral
 
-validate :: ISpace D2 Component -> ISpace D2 Status
+validate :: Bounds w h => ISpace w h Component -> ISpace w h Status
 validate = extend check
 
 -- pair :: Component -> Dir
@@ -25,7 +25,7 @@ pair R = PLeft
 pair D = PUp
 pair L = PRight
 
-check :: ISpace D2 Component -> Status
+check :: Bounds w h => ISpace w h Component -> Status
 check w = case extract w of
             Empty -> Neutral
             Source -> Good

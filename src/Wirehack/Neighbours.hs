@@ -6,7 +6,6 @@ import Wirehack.Space
 
 import Control.Comonad.Store
 import Data.Monoid
-import Data.Functor.Rep
 
 data Dir = L | R | U | D
   deriving (Show, Eq)
@@ -18,9 +17,8 @@ indOf D = (1, 0)
 indOf L = (0, -1)
 indOf R = (0, 1)
 
-nearby :: ((Sum Int, Sum Int) ~ Rep r) => Dir -> ISpace r a -> a
-nearby (indOf -> offsets) = peeks (mappend offsets)
+nearby :: Dir -> ISpace w h a -> a
+nearby (indOf -> offsets) s@(ISpace _ _) = peeks (<> offsets) s
 
-move :: ((Sum Int, Sum Int) ~ Rep r) => Dir -> ISpace r a -> ISpace r a
-move (indOf -> offsets) = seeks (mappend offsets)
-
+move :: Dir -> ISpace w h a -> ISpace w h a
+move (indOf -> offsets) s@(ISpace _ _) = seeks (<> offsets) s

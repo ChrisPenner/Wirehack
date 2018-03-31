@@ -3,16 +3,16 @@
 {-# language FlexibleContexts #-}
 {-# language ViewPatterns #-}
 {-# language TupleSections #-}
+{-# language DataKinds #-}
 module Wirehack.Display where
 
 import Wirehack.Components
 import Wirehack.Space
 import Wirehack.Neighbours
 import Wirehack.Turn
-import Wirehack.Dim
 
+import Data.Vector (toList)
 import Data.Functor.Rep
-import Data.Functor.Compose
 import qualified Data.Text as T
 
 import Control.Applicative
@@ -23,14 +23,11 @@ import Data.Monoid
 
 import qualified Graphics.Vty as V
 
-type HackM a = StateT (ISpace D2 Component) IO a
+type HackM w h a = StateT (ISpace w h Component) IO a
 
 type RangeI r = (Rep r, Rep r)
 
-board :: RangeI D2
-board = ((0, 0), (60, 30))
-
-start :: ISpace D2 Component
+start :: ISpace 20 20 Component
 start = ISpace (0, 0) (tabulate (const Empty))
 
 interrupt :: V.Event
@@ -42,7 +39,7 @@ startGame = do
   handle (\(e :: SomeException) -> V.shutdown vty >> print e) $
     evalStateT (gameLoop vty) start
 
-doMove :: V.Event -> HackM ()
+doMove :: Bounds w h => V.Event -> HackM w h ()
 doMove (V.EvKey V.KEnter _)      = focus .= Source
 doMove (V.EvKey (V.KChar ' ') _) = focus .= Empty
 doMove (V.EvKey (V.KChar 'H') _) = focus .= PLeft
@@ -55,10 +52,10 @@ doMove (V.EvKey (V.KChar 'k') _) = modify $ move U
 doMove (V.EvKey (V.KChar 'j') _) = modify $ move D
 doMove _ = return ()
 
-gameLoop :: V.Vty -> HackM ()
+gameLoop :: Bounds w h => V.Vty -> HackM w h ()
 gameLoop vty = do
   st <- get
-  let img = render . getRange board .  getSpace .  highlight . colorize . attrs $ st
+  let img = render . highlight . colorize . attrs $ st
   liftIO . V.update vty . V.picForImage $ img
   e <- liftIO $ V.nextEvent vty
   doMove e
@@ -69,19 +66,19 @@ gameLoop vty = do
     highlight = focus . _1 <>~ highlighting
     highlighting  = V.withStyle V.currentAttr V.reverseVideo
 
-render :: Show a => Compose [] [] (V.Attr, a) -> V.Image
-render = V.vertCat . fmap (V.horizCat . fmap rep) . getCompose
+render :: Show a => ISpace w h (V.Attr, a) -> V.Image
+render (ISpace _ (Space spc)) = V.vertCat . fmap (V.horizCat . fmap rep) . toList . fmap toList $  spc
   where
     rep (attr, T.pack . show -> txt) = V.text' attr txt
 
 attrs :: Functor f => f a -> f (V.Attr, a)
 attrs = fmap (V.defAttr,)
 
-colorize :: ISpace D2 (V.Attr, Component) -> ISpace D2 (V.Attr, Component)
-colorize w@(ISpace foc spc) = ISpace foc $ liftA2 combine (fmap color valid) spc
+colorize :: Bounds w h => ISpace w h (V.Attr, Component) -> ISpace w h (V.Attr, Component)
+colorize spc = liftA2 combine (color <$> valid) spc
   where
     combine a (a', x) = (a' <> a, x)
-    valid = getSpace . validate . fmap snd $ w
+    valid = validate . fmap snd $ spc
     color Good = V.withForeColor V.defAttr V.green
     color Bad = V.withForeColor V.defAttr V.red
     color Neutral = V.currentAttr
@@ -89,10 +86,10 @@ colorize w@(ISpace foc spc) = ISpace foc $ liftA2 combine (fmap color valid) spc
 
 
 
--- idISpace :: ISpace D2 (Rep D2)
--- idISpace = ISpace (0, 0) idD2
+-- idISpace :: Space (Rep D2)
+-- idISpace = Space (0, 0) idD2
 
--- idD2 :: D2 (Rep D2)
+-- idD2 :: (Rep D2)
 -- idD2 = tabulate id
 
 -- idSpace :: Space (Rep Space)
