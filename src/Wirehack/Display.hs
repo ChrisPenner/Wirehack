@@ -1,6 +1,4 @@
-{-# language FlexibleInstances #-}
 {-# language ScopedTypeVariables #-}
-{-# language FlexibleContexts #-}
 {-# language ViewPatterns #-}
 {-# language TupleSections #-}
 {-# language DataKinds #-}
@@ -24,8 +22,6 @@ import Data.Monoid
 import qualified Graphics.Vty as V
 
 type HackM w h a = StateT (ISpace w h Component) IO a
-
-type RangeI r = (Rep r, Rep r)
 
 start :: ISpace 20 20 Component
 start = ISpace (0, 0) (tabulate (const Empty))

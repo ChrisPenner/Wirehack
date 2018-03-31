@@ -1,5 +1,3 @@
-{-# language TypeFamilies #-}
-{-# language FlexibleContexts #-}
 module Wirehack.Turn where
 
 import Wirehack.Space
@@ -11,13 +9,6 @@ data Status = Good | Bad | Neutral
 
 validate :: Bounds w h => ISpace w h Component -> ISpace w h Status
 validate = extend check
-
--- pair :: Component -> Dir
--- pair PDown = U
--- pair PLeft = R
--- pair PUp = D
--- pair PRight = L
--- pair Empty = U
 
 pair :: Dir -> Component
 pair U = PDown

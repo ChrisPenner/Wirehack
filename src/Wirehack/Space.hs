@@ -11,15 +11,11 @@ module Wirehack.Space where
 import Data.Distributive
 import Data.Functor.Rep
 import Control.Comonad
-import Control.Comonad.Env
-import Data.Functor.Compose
 import Data.Monoid
 import Data.Vector as V
 import Control.Lens hiding (index)
-import qualified Data.Stream.Infinite as S
 import GHC.TypeLits
 import Data.Proxy
-import Control.Applicative
 
 import Control.Comonad.Representable.Store
 
