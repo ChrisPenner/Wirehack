@@ -47,8 +47,23 @@ instance Bounds w h => Comonad (ISpace w h) where
     ISpace ind (tabulate (\ix -> f (ISpace ix spc)))
 
 instance Bounds w h => ComonadStore (Sum Int, Sum Int) (ISpace w h) where
-  pos (ISpace ind _) = ind
-  peek ind (ISpace _ spc) = index spc ind
+  pos (ISpace ind _) =
+    let bounds = (fromIntegral $ natVal (Proxy :: Proxy w), fromIntegral $ natVal (Proxy :: Proxy h))
+     in clamp bounds ind
+  peek ind (ISpace _ spc) =
+    let bounds = (fromIntegral $ natVal (Proxy :: Proxy w), fromIntegral $ natVal (Proxy :: Proxy h))
+     in index spc $ clamp bounds ind
+  peeks f w@(ISpace ind spc) = peek (f ind) w
+  seek ind (ISpace _ spc) =
+    let bounds = (fromIntegral $ natVal (Proxy :: Proxy w), fromIntegral $ natVal (Proxy :: Proxy h))
+     in ISpace (clamp bounds ind) spc
+  seeks f w@(ISpace ind spc) = seek (f ind) w
+
+clamp :: (Int, Int) -> (Sum Int, Sum Int) -> (Sum Int, Sum Int)
+clamp (width, height) (Sum x, Sum y) =
+  (Sum $ clampScalar width x, Sum $ clampScalar height y)
+  where
+    clampScalar n val = min (n - 1) (max 0 val)
 
 instance Bounds w h => Distributive (Space w h) where
   distribute = distributeRep
