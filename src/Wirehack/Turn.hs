@@ -4,11 +4,18 @@ import Wirehack.Space
 import Wirehack.Components
 import Wirehack.Neighbours
 import Control.Comonad
+import Data.Functor.Rep
+import Data.Monoid
+import Control.Comonad.Representable.Store
+import Control.Lens hiding (Empty)
 
 data Status = Good | Bad | Neutral
 
-validate :: Bounds w h => ISpace w h Component -> ISpace w h Status
-validate = extend check
+validate :: Bounds w h => ISpace w h Cell -> ISpace w h Status
+validate = fmap toStatus . checkPower
+  where
+    toStatus True = Good
+    toStatus _ = Bad
 
 pair :: Dir -> Component
 pair U = PDown
@@ -16,13 +23,18 @@ pair R = PLeft
 pair D = PUp
 pair L = PRight
 
-check :: Bounds w h => ISpace w h Component -> Status
-check w = case extract w of
-            Empty -> Neutral
-            Source -> Good
-            PUp ->    if any match [R, L, D] then Good else Bad
-            PDown ->  if any match [R, L, U] then Good else Bad
-            PLeft ->  if any match [R, U, D] then Good else Bad
-            PRight -> if any match [U, L, D] then Good else Bad
+checkPower :: Bounds w h => ISpace w h Cell -> ISpace w h Bool
+checkPower = extend isPowered
   where
-    match d = nearby d w == pair d || nearby d w == Source
+    isPowered :: Bounds w h => ISpace w h Cell -> Bool
+    isPowered spc | spc ^. focus . component == Source = True
+    isPowered spc = getAny . foldMap Any . imapRep powersMe . neighbourCells $ spc
+    powersMe :: Dir -> Cell -> Bool
+    powersMe = powers . flipDir
+    neighbourCells :: Bounds w h => ISpace w h Cell -> Neighbours Cell
+    neighbourCells = experiment getNeighbours
+    getNeighbours :: Ind -> Neighbours Ind
+    getNeighbours ind = mappend ind <$> neighbourPos
+
+stepPower :: Bounds w h => ISpace w h Cell -> ISpace w h Cell
+stepPower spc = set powered <$> checkPower spc <*> spc

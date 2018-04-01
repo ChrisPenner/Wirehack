@@ -20,9 +20,10 @@ library
                      , Wirehack.Turn
                      , Wirehack.Display
                      , Wirehack.Neighbours
+                     , Wirehack.Render
                      , Wirehack
   build-depends:       base >= 4.7 && < 5
-                     , adjunctions
+                     , adjunctions >= 4.4 && < 4.5
                      , distributive
                      , comonad
                      , vty
@@ -32,6 +33,7 @@ library
                      , streams
                      , singletons
                      , vector
+                     , data-default
   default-language:    Haskell2010
 
 executable wirehack-exe

@@ -20,9 +20,10 @@ import Data.Proxy
 import Control.Comonad.Representable.Store
 
 type Bounds w h = (KnownNat w, KnownNat h)
+type Ind = (Sum Int, Sum Int)
 
 data ISpace width height a where
-  ISpace :: Bounds w h => (Sum Int, Sum Int) -> (Space w h a) -> ISpace w h a
+  ISpace :: Bounds w h => Ind -> (Space w h a) -> ISpace w h a
 
 instance Functor (ISpace w h) where
   fmap f (ISpace ind spc) = ISpace ind (fmap f spc)
@@ -46,7 +47,7 @@ instance Bounds w h => Comonad (ISpace w h) where
   extend f (ISpace ind spc) =
     ISpace ind (tabulate (\ix -> f (ISpace ix spc)))
 
-instance Bounds w h => ComonadStore (Sum Int, Sum Int) (ISpace w h) where
+instance Bounds w h => ComonadStore Ind (ISpace w h) where
   pos (ISpace ind _) =
     let bounds = (fromIntegral $ natVal (Proxy :: Proxy w), fromIntegral $ natVal (Proxy :: Proxy h))
      in clamp bounds ind
@@ -59,7 +60,7 @@ instance Bounds w h => ComonadStore (Sum Int, Sum Int) (ISpace w h) where
      in ISpace (clamp bounds ind) spc
   seeks f w@(ISpace ind spc) = seek (f ind) w
 
-clamp :: (Int, Int) -> (Sum Int, Sum Int) -> (Sum Int, Sum Int)
+clamp :: (Int, Int) -> Ind -> Ind
 clamp (width, height) (Sum x, Sum y) =
   (Sum $ clampScalar width x, Sum $ clampScalar height y)
   where
@@ -69,7 +70,7 @@ instance Bounds w h => Distributive (Space w h) where
   distribute = distributeRep
 
 instance Bounds w h => Representable (Space w h) where
-  type Rep (Space x y) = (Sum Int, Sum Int)
+  type Rep (Space x y) = Ind
   index (Space spc) (Sum x, Sum y) = spc ! x ! y
   tabulate f = Space $ V.generate width (\ x -> V.generate height (\y -> f (Sum x, Sum y)))
     where
