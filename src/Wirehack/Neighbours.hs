@@ -19,4 +19,4 @@ nearby :: Bounds w h => Dir -> ISpace w h a -> a
 nearby (indOf -> offsets) = peeks (<> offsets)
 
 move :: Bounds w h => Dir -> ISpace w h a -> ISpace w h a
-move (indOf -> offsets) = seeks (<> offsets)
+move (indOf -> offset) = seeks (<> offset)

@@ -1,6 +1,5 @@
 {-# language ScopedTypeVariables #-}
 {-# language ViewPatterns #-}
-{-# language TupleSections #-}
 {-# language DataKinds #-}
 module Wirehack.Display where
 
@@ -72,7 +71,7 @@ render (ISpace _ (Space spc)) =
     rep (attr, T.pack . show -> txt) = V.text' attr txt
 
 attrs :: Functor f => f a -> f (V.Attr, a)
-attrs = fmap (V.defAttr,)
+attrs = fmap ((,) V.defAttr)
 
 colorize :: Bounds w h => ISpace w h (V.Attr, Component) -> ISpace w h (V.Attr, Component)
 colorize spc = liftA2 combine (color <$> valid) spc
