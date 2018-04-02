@@ -54,11 +54,11 @@ instance Bounds w h => ComonadStore Ind (ISpace w h) where
   peek ind (ISpace _ spc) =
     let bounds = (fromIntegral $ natVal (Proxy :: Proxy w), fromIntegral $ natVal (Proxy :: Proxy h))
      in index spc $ clamp bounds ind
-  peeks f w@(ISpace ind spc) = peek (f ind) w
+  peeks f w@(ISpace ind _) = peek (f ind) w
   seek ind (ISpace _ spc) =
     let bounds = (fromIntegral $ natVal (Proxy :: Proxy w), fromIntegral $ natVal (Proxy :: Proxy h))
      in ISpace (clamp bounds ind) spc
-  seeks f w@(ISpace ind spc) = seek (f ind) w
+  seeks f w@(ISpace ind _) = seek (f ind) w
 
 clamp :: (Int, Int) -> Ind -> Ind
 clamp (width, height) (Sum x, Sum y) =
