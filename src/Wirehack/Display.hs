@@ -1,6 +1,8 @@
+{-# language RankNTypes #-}
 {-# language ScopedTypeVariables #-}
 {-# language ViewPatterns #-}
 {-# language DataKinds #-}
+{-# language FlexibleInstances #-}
 module Wirehack.Display where
 
 import Wirehack.Components
@@ -9,6 +11,10 @@ import Wirehack.Neighbours
 import Wirehack.Turn
 import Wirehack.Render
 
+import Eve
+import Eve.CLI
+
+import Control.Concurrent
 import Data.Vector (Vector)
 import Data.Functor.Rep
 import qualified Data.Text as T
@@ -19,46 +25,48 @@ import Control.Monad.State
 import Control.Lens hiding (Index, Empty, index)
 import Control.Exception
 import Data.Monoid
+import Data.Default
 
 import qualified Graphics.Vty as V
 
 type HackM w h a = StateT (ISpace w h Cell) IO a
 
-start :: ISpace 20 20 Cell
-start = ISpace (0, 0) (tabulate (const emp))
+instance Default (ISpace 20 20 Cell) where
+  def = ISpace (0, 0) (tabulate (const emp))
 
-interrupt :: V.Event
-interrupt = V.EvKey (V.KChar 'c') [V.MCtrl]
+interrupt :: Keypress
+interrupt = Keypress (V.KChar 'c') [V.MCtrl]
 
-startGame :: IO ()
-startGame = do
-  vty <- V.mkVty V.defaultConfig
-  handle (\(e :: SomeException) -> V.shutdown vty >> print e) $
-    evalStateT (gameLoop vty) start
+space :: (HasStates s) => Lens' s (ISpace 20 20 Cell)
+space = stateLens
 
-doMove :: Bounds w h => V.Event -> HackM w h ()
-doMove (V.EvKey V.KEnter _)      = focus .= source
-doMove (V.EvKey (V.KChar ' ') _) = focus .= emp
-doMove (V.EvKey (V.KChar 'H') _) = focus .= pl
-doMove (V.EvKey (V.KChar 'J') _) = focus .= pd
-doMove (V.EvKey (V.KChar 'K') _) = focus .= pu
-doMove (V.EvKey (V.KChar 'L') _) = focus .= pr
-doMove (V.EvKey (V.KChar 'l') _) = modify $ move R
-doMove (V.EvKey (V.KChar 'h') _) = modify $ move L
-doMove (V.EvKey (V.KChar 'k') _) = modify $ move U
-doMove (V.EvKey (V.KChar 'j') _) = modify $ move D
+doMove :: Keypress -> App ()
+doMove (Keypress V.KEnter _)      = space . focus .= source
+doMove (Keypress (V.KChar ' ') _) = space . focus .= emp
+doMove (Keypress (V.KChar 'H') _) = space . focus .= pl
+doMove (Keypress (V.KChar 'J') _) = space . focus .= pd
+doMove (Keypress (V.KChar 'K') _) = space . focus .= pu
+doMove (Keypress (V.KChar 'L') _) = space . focus .= pr
+doMove (Keypress (V.KChar 'l') _) = space %= move R
+doMove (Keypress (V.KChar 'h') _) = space %= move L
+doMove (Keypress (V.KChar 'k') _) = space %= move U
+doMove (Keypress (V.KChar 'j') _) = space %= move D
 doMove _ = return ()
 
-gameLoop :: Bounds w h => V.Vty -> HackM w h ()
-gameLoop vty = do
-  spc <- get
-  liftIO . V.update vty . V.picForImage . render $ spc
-  e <- liftIO $ V.nextEvent vty
-  doMove e
-  if e == interrupt
-     then liftIO $ V.shutdown vty
-     else stepGame *> gameLoop vty
+handleKeypress :: Keypress -> App ()
+handleKeypress k | k == interrupt = exit
+handleKeypress k = doMove k
 
-stepGame :: Bounds w h => HackM w h ()
+renderSpace :: App ()
+renderSpace = do
+  spc <- use space
+  renderImage . render $ spc
+
+stepGame :: App ()
 stepGame = do
-  modify stepPower
+  space %= stepPower
+  renderSpace
+
+data Timer = Timer
+timer :: EventDispatcher -> IO ()
+timer dispatch = forever $ dispatch Timer >> threadDelay 500000

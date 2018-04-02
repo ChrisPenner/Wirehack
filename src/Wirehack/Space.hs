@@ -16,6 +16,7 @@ import Data.Vector as V
 import Control.Lens hiding (index)
 import GHC.TypeLits
 import Data.Proxy
+import Data.Default
 
 import Control.Comonad.Representable.Store
 
@@ -70,7 +71,7 @@ instance Bounds w h => Distributive (Space w h) where
   distribute = distributeRep
 
 instance Bounds w h => Representable (Space w h) where
-  type Rep (Space x y) = Ind
+  type Rep (Space w h) = Ind
   index (Space spc) (Sum x, Sum y) = spc ! x ! y
   tabulate f = Space $ V.generate width (\ x -> V.generate height (\y -> f (Sum x, Sum y)))
     where
