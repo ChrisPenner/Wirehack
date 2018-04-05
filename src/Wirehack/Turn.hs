@@ -1,8 +1,10 @@
+{-# language ScopedTypeVariables #-}
 module Wirehack.Turn where
 
 import Wirehack.Space
-import Wirehack.Components
+import Wirehack.Cell
 import Wirehack.Neighbours
+import Wirehack.Power
 import Control.Comonad
 import Data.Functor.Rep
 import Data.Monoid
@@ -24,17 +26,11 @@ pair D = PUp
 pair L = PRight
 
 checkPower :: Bounds w h => ISpace w h Cell -> ISpace w h Bool
-checkPower = extend isPowered
-  where
-    isPowered :: Bounds w h => ISpace w h Cell -> Bool
-    isPowered spc | spc ^. focus . component == Source = True
-    isPowered spc = getAny . foldMap Any . imapRep powersMe . neighbourCells $ spc
-    powersMe :: Dir -> Cell -> Bool
-    powersMe = powers . flipDir
-    neighbourCells :: Bounds w h => ISpace w h Cell -> Neighbours Cell
-    neighbourCells = experiment getNeighbours
-    getNeighbours :: Ind -> Neighbours Ind
-    getNeighbours ind = mappend ind <$> neighbourPos
+checkPower = fmap hasPower
 
-stepPower :: Bounds w h => ISpace w h Cell -> ISpace w h Cell
-stepPower spc = set powered <$> checkPower spc <*> spc
+stepPower :: forall w h. Bounds w h => ISpace w h Cell -> ISpace w h Cell
+stepPower spc = set poweredBy <$> poweredByNeighbours <*> spc
+  where
+    poweredByNeighbours = getPoweredBy <$> spc <*> cellNeighbours
+    cellNeighbours :: ISpace w h (Neighbours Cell)
+    cellNeighbours = extend (experiment (\i -> fmap (<> i) neighbourPos)) spc

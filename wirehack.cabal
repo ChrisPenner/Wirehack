@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 77b999a3a8297db0f57ce829590b54594028c763d58eb645c398cd861443de57
+-- hash: 0cc4b29767f70e4f53943d4b76e285e67e57610e830824b57b268c6c10bfc5c3
 
 name:           wirehack
 version:        0.1.0.0
@@ -38,16 +38,19 @@ library
     , eve-cli >=0.2 && <0.3
     , lens
     , mtl
+    , safe >=0.3 && <0.4
     , singletons
     , text
     , vector
     , vty
   exposed-modules:
       Wirehack
-      Wirehack.Components
+      Wirehack.Cell
       Wirehack.Display
       Wirehack.Loop
+      Wirehack.Marshal
       Wirehack.Neighbours
+      Wirehack.Power
       Wirehack.Render
       Wirehack.Space
       Wirehack.Turn

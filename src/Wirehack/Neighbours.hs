@@ -61,4 +61,3 @@ indOf U = (-1, 0)
 indOf D = (1, 0)
 indOf L = (0, -1)
 indOf R = (0, 1)
-

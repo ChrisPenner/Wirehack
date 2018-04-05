@@ -3,8 +3,9 @@
 module Wirehack.Render where
 
 import Graphics.Vty as V
-import Wirehack.Components
+import Wirehack.Cell
 import Wirehack.Space
+import Wirehack.Power
 import qualified Data.Text.Lazy as T
 import Data.Vector (Vector)
 import Control.Lens hiding (Empty)
@@ -16,7 +17,7 @@ class Attrs a where
 instance Attrs Cell where
   attrs Cell{_component=Empty} = V.defAttr
   attrs cell = V.withForeColor V.defAttr $
-    if cell ^. powered
+    if hasPower cell
       then V.green
       else V.red
 

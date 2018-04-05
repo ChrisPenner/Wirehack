@@ -12,11 +12,12 @@ import Data.Distributive
 import Data.Functor.Rep
 import Control.Comonad
 import Data.Monoid
-import Data.Vector as V
+import qualified Data.Vector as V
 import Control.Lens hiding (index)
 import GHC.TypeLits
 import Data.Proxy
 import Data.Default
+import Data.Functor.Compose
 
 import Control.Comonad.Representable.Store
 
@@ -26,6 +27,12 @@ type Ind = (Sum Int, Sum Int)
 data ISpace width height a where
   ISpace :: Bounds w h => Ind -> (Space w h a) -> ISpace w h a
 
+instance (Show a) => Show (Space w h a) where
+  show (Space spc) = "Space " ++ show spc
+
+instance (Show a) => Show (ISpace w h a) where
+  show (ISpace ind spc) = "ISpace " ++ show ind ++ show spc
+
 instance Functor (ISpace w h) where
   fmap f (ISpace ind spc) = ISpace ind (fmap f spc)
 
@@ -34,7 +41,7 @@ instance Bounds w h => Applicative (ISpace w h) where
   (ISpace indA a) <*> (ISpace _ b) = ISpace indA (a <*> b)
 
 data Space (width :: Nat) (height :: Nat) a where
-  Space :: Bounds w h => (Vector (Vector a)) -> Space w h a
+  Space :: Bounds w h => (V.Vector (V.Vector a)) -> Space w h a
 
 instance Functor (Space w h) where
   fmap f (Space spc) = Space (fmap (fmap f) spc)
@@ -72,17 +79,29 @@ instance Bounds w h => Distributive (Space w h) where
 
 instance Bounds w h => Representable (Space w h) where
   type Rep (Space w h) = Ind
-  index (Space spc) (Sum x, Sum y) = spc ! x ! y
+  index (Space spc) (Sum x, Sum y) = spc V.! x V.! y
   tabulate f = Space $ V.generate width (\ x -> V.generate height (\y -> f (Sum x, Sum y)))
     where
       width = fromIntegral $ natVal (Proxy :: Proxy w)
       height = fromIntegral $ natVal (Proxy :: Proxy h)
 
+instance Foldable (Space w h) where
+  foldMap f (Space spc) = foldMap f (Compose spc)
+
+instance Traversable (Space w h) where
+  traverse f (Space spc) = Space . getCompose <$> traverse f (Compose spc)
+
+instance Foldable (ISpace w h) where
+  foldMap f (ISpace _ spc) = foldMap f spc
+
+instance Traversable (ISpace w h) where
+  traverse f (ISpace ind spc) = ISpace ind <$> traverse f spc
+
 focus :: Bounds w h => Lens' (ISpace w h a) a
 focus = lens getter setter
   where
     getter spc@(ISpace _ _) = extract spc
-    setter (ISpace ind@(Sum x, Sum y) (Space spc)) new = ISpace ind . Space $ spc // [(x, newInner)]
+    setter (ISpace ind@(Sum x, Sum y) (Space spc)) new = ISpace ind . Space $ spc V.// [(x, newInner)]
       where
-        nestedVal = spc ! x
-        newInner = nestedVal // [(y, new)]
+        nestedVal = spc V.! x
+        newInner = nestedVal V.// [(y, new)]

@@ -5,7 +5,7 @@
 {-# language FlexibleInstances #-}
 module Wirehack.Display where
 
-import Wirehack.Components
+import Wirehack.Cell
 import Wirehack.Space
 import Wirehack.Neighbours
 import Wirehack.Turn
@@ -14,35 +14,30 @@ import Wirehack.Render
 import Eve
 import Eve.CLI
 
-import Control.Concurrent
-import Data.Vector (Vector)
-import Data.Functor.Rep
-import qualified Data.Text as T
 
-import Control.Arrow ((&&&))
-import Control.Applicative
 import Control.Monad.State
 import Control.Lens hiding (Index, Empty, index)
-import Control.Exception
-import Data.Monoid
 import Data.Default
+import Data.Functor.Rep
 
 import qualified Graphics.Vty as V
 
 type HackM w h a = StateT (ISpace w h Cell) IO a
 
-instance Default (ISpace 20 20 Cell) where
-  def = ISpace (0, 0) (tabulate (const emp))
-
 interrupt :: Keypress
 interrupt = Keypress (V.KChar 'c') [V.MCtrl]
+
+instance Bounds w h => Default (ISpace w h Cell) where
+  def = ISpace (0, 0) (tabulate (const emp))
 
 space :: (HasStates s) => Lens' s (ISpace 20 20 Cell)
 space = stateLens
 
 doMove :: Keypress -> App ()
-doMove (Keypress V.KEnter _)      = space . focus .= source
-doMove (Keypress (V.KChar ' ') _) = space . focus .= emp
+doMove (Keypress (V.KChar '*') _) = space . focus .= source
+doMove (Keypress (V.KChar 'o') _) = space . focus .= sink
+doMove (Keypress (V.KChar '+') _) = space . focus .= cross
+doMove (Keypress (V.KChar '.') _) = space . focus .= emp
 doMove (Keypress (V.KChar 'H') _) = space . focus .= pl
 doMove (Keypress (V.KChar 'J') _) = space . focus .= pd
 doMove (Keypress (V.KChar 'K') _) = space . focus .= pu
