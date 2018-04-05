@@ -66,7 +66,3 @@ stepGame :: App ()
 stepGame = do
   space %= stepPower
   renderSpace
-
-data Timer = Timer
-timer :: EventDispatcher -> IO ()
-timer dispatch = forever $ dispatch Timer >> threadDelay 500000

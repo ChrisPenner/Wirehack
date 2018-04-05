@@ -1,0 +1,58 @@
+name: wirehack
+version: '0.1.0.0'
+category: Web
+author: Chris Penner
+maintainer: christopher.penner@gmail.com
+copyright: 2017 Chris Penner
+license: BSD3
+github: ChrisPenner/wirehack
+extra-source-files:
+- README.md
+library:
+  source-dirs: src
+  exposed-modules:
+  - Wirehack.Space
+  - Wirehack.Components
+  - Wirehack.Turn
+  - Wirehack.Display
+  - Wirehack.Neighbours
+  - Wirehack.Render
+  - Wirehack
+  dependencies:
+  - base >=4.7 && <5
+  - adjunctions >=4.4 && <4.5
+  - distributive
+  - comonad
+  - vty
+  - mtl
+  - lens
+  - text
+  - singletons
+  - vector
+  - data-default
+  - eve >=0.1.8 && <0.2
+  - eve-cli >=0.2 && <0.3
+executables:
+  wirehack-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - base
+    - wirehack
+    - eve
+    - eve-cli
+tests:
+  wirehack-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - base
+    - wirehack
