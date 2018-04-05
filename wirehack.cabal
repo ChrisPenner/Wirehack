@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 317e074f515336bdbb2ca2d8b3703ad038abada985fbcedc177b66b7383b686f
+-- hash: 77b999a3a8297db0f57ce829590b54594028c763d58eb645c398cd861443de57
 
 name:           wirehack
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   hs-source-dirs:
       src
+  ghc-options: -Wall
   build-depends:
       adjunctions >=4.4 && <4.5
     , base >=4.7 && <5
@@ -42,15 +43,15 @@ library
     , vector
     , vty
   exposed-modules:
-      Wirehack.Space
+      Wirehack
       Wirehack.Components
-      Wirehack.Turn
       Wirehack.Display
+      Wirehack.Loop
       Wirehack.Neighbours
       Wirehack.Render
-      Wirehack
+      Wirehack.Space
+      Wirehack.Turn
   other-modules:
-      Wirehack.Loop
       Paths_wirehack
   default-language: Haskell2010
 
@@ -58,24 +59,11 @@ executable wirehack-exe
   main-is: Main.hs
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
     , eve
     , eve-cli
-    , wirehack
-  other-modules:
-      Paths_wirehack
-  default-language: Haskell2010
-
-test-suite wirehack-test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  hs-source-dirs:
-      test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      base
     , wirehack
   other-modules:
       Paths_wirehack

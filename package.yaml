@@ -10,14 +10,8 @@ extra-source-files:
 - README.md
 library:
   source-dirs: src
-  exposed-modules:
-  - Wirehack.Space
-  - Wirehack.Components
-  - Wirehack.Turn
-  - Wirehack.Display
-  - Wirehack.Neighbours
-  - Wirehack.Render
-  - Wirehack
+  ghc-options:
+  - -Wall
   dependencies:
   - base >=4.7 && <5
   - adjunctions >=4.4 && <4.5
@@ -37,6 +31,7 @@ executables:
     main: Main.hs
     source-dirs: app
     ghc-options:
+    - -Wall
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
@@ -45,14 +40,3 @@ executables:
     - wirehack
     - eve
     - eve-cli
-tests:
-  wirehack-test:
-    main: Spec.hs
-    source-dirs: test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - base
-    - wirehack
