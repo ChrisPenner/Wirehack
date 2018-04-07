@@ -16,9 +16,7 @@ hasPower Cell{_poweredBy=p} = getAny $ foldMap Any p
 powers :: Dir -> Cell -> Bool
 powers _ Cell{_component=Source} = True
 powers x Cell{_component=Cross, _poweredBy=p} = p `index` flipDir x
-powers U Cell{_component=PUp, _poweredBy=p} = getAny $ foldMap Any p
-powers D Cell{_component=PDown, _poweredBy=p} = getAny $ foldMap Any p
-powers L Cell{_component=PLeft, _poweredBy=p} = getAny $ foldMap Any p
-powers R Cell{_component=PRight, _poweredBy=p} = getAny $ foldMap Any p
+powers x Cell{_component=Wire x', _poweredBy=p} 
+  | (getAny $ foldMap Any p) = x == x'
 powers _ _ = False
 

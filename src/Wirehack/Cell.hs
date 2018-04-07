@@ -9,21 +9,23 @@ import Data.Default
 import qualified Graphics.Vty as V
 import Data.Text.Lens
 
-data Component = Empty | Source | Sink | Cross | PRight | PLeft | PUp | PDown
+data Component a =
+      Empty
+    | Source
+    | Sink
+    | Cross
+    | Wire a
   deriving (Eq)
 
-instance Show Component where
+instance Show a => Show (Component a) where
   show Empty = "."
   show Source = "*"
   show Sink = "o"
   show Cross = "+"
-  show PRight = ">"
-  show PLeft = "<"
-  show PUp = "^"
-  show PDown = "v"
+  show (Wire d) = show d
 
 data Cell = Cell
-  { _component :: Component
+  { _component :: Component Dir
   , _poweredBy :: Neighbours Bool
   }
 
@@ -43,7 +45,7 @@ emp = def
 source = def & component .~ Source
 sink = def & component .~ Sink
 cross = def & component .~ Cross
-pr = def & component .~ PRight
-pl = def & component .~ PLeft
-pu = def & component .~ PUp
-pd = def & component .~ PDown
+pr = def & component .~ Wire R
+pl = def & component .~ Wire L
+pu = def & component .~ Wire U
+pd = def & component .~ Wire D

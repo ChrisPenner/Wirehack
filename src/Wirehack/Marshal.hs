@@ -23,8 +23,8 @@ fromText txt = sequenceA $ tabulate (fmap cellFromChar . buildSpace)
     cellFromChar '^' = pu
     cellFromChar 'v' = pd
     cellFromChar _ = pd
-    buildSpace ::  Ind -> Maybe Char
-    buildSpace (Sum x, Sum y) = do
+    buildSpace ::  Ind w h -> Maybe Char
+    buildSpace (Mod x, Mod y) = do
       line <- lines' `atMay` y 
       if T.length line <= x 
          then Nothing

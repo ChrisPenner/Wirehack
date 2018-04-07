@@ -13,7 +13,13 @@ import Control.Comonad.Store
 import Data.Monoid
 
 data Dir = L | R | U | D
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show Dir where
+  show L = "<"
+  show R = ">"
+  show U = "^"
+  show D = "v"
 
 flipDir :: Dir -> Dir
 flipDir U = D
@@ -53,10 +59,13 @@ instance Representable Neighbours where
               , down=f D
               }
 
-neighbourPos :: Neighbours (Sum Int, Sum Int)
+neighbourPos :: Bounds w h => Neighbours (Ind w h)
 neighbourPos = tabulate indOf
 
-indOf :: Dir -> (Sum Int, Sum Int)
+neighboursOf :: Bounds w h => ISpace w h a -> ISpace w h (Neighbours a)
+neighboursOf = extend (experiment (\i -> fmap (<> i) neighbourPos))
+
+indOf :: Bounds w h => Dir -> Ind w h
 indOf U = (-1, 0)
 indOf D = (1, 0)
 indOf L = (0, -1)
