@@ -32,5 +32,11 @@ latch = stateLens . latchVal
 
 latchMove :: Dir -> App ()
 latchMove d = do
-  space . focus .= wire d
+  space . focus . component %= latchSet d
   space %= move d
+
+latchSet :: Dir -> Component Dir -> Component Dir
+latchSet _ Cross = Cross
+latchSet d (Wire w)
+  | w /= d && w /= flipDir d = Cross
+latchSet d _ = Wire d
