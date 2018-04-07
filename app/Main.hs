@@ -2,6 +2,7 @@
 module Main where
 
 import Wirehack.Display
+import Wirehack.Events
 
 import Eve
 import Eve.CLI

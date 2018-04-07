@@ -54,10 +54,10 @@ instance Representable Neighbours where
   index n D = down n
   tabulate f =
     Neighbours { left=f L
-              , right=f R
-              , up=f U
-              , down=f D
-              }
+               , right=f R
+               , up=f U
+               , down=f D
+               }
 
 neighbourPos :: Bounds w h => Neighbours (Ind w h)
 neighbourPos = tabulate indOf

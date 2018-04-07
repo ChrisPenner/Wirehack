@@ -8,6 +8,7 @@
 {-# language ConstraintKinds #-}
 module Wirehack.Space where
 
+import Eve
 import Data.Distributive
 import Data.Functor.Rep
 import Control.Comonad

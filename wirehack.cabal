@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0cc4b29767f70e4f53943d4b76e285e67e57610e830824b57b268c6c10bfc5c3
+-- hash: 43640b8fcd327c48a7792a7a22c0be449284132ab6b8fc29b17cff88879be494
 
 name:           wirehack
 version:        0.1.0.0
@@ -47,12 +47,14 @@ library
       Wirehack
       Wirehack.Cell
       Wirehack.Display
+      Wirehack.Events
       Wirehack.Loop
       Wirehack.Marshal
       Wirehack.Neighbours
       Wirehack.Power
       Wirehack.Render
       Wirehack.Space
+      Wirehack.State
       Wirehack.Turn
   other-modules:
       Paths_wirehack

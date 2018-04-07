@@ -40,12 +40,11 @@ instance Default Cell where
     , _poweredBy=tabulate (const False)
     }
 
-emp, source, cross, pr, pl, pu, pd :: Cell
+emp, source, cross :: Cell
 emp = def
 source = def & component .~ Source
 sink = def & component .~ Sink
 cross = def & component .~ Cross
-pr = def & component .~ Wire R
-pl = def & component .~ Wire L
-pu = def & component .~ Wire U
-pd = def & component .~ Wire D
+
+wire :: Dir -> Cell
+wire d = def & component .~ Wire d

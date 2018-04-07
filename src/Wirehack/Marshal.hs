@@ -5,6 +5,7 @@ module Wirehack.Marshal where
 
 import Wirehack.Cell
 import Wirehack.Space
+import Wirehack.Neighbours
 import Data.Functor.Rep
 import Data.Monoid
 import qualified Data.Text as T
@@ -18,11 +19,11 @@ fromText txt = sequenceA $ tabulate (fmap cellFromChar . buildSpace)
     cellFromChar '.' = emp
     cellFromChar '*' = source
     cellFromChar 'o' = sink
-    cellFromChar '>' = pr
-    cellFromChar '<' = pl
-    cellFromChar '^' = pu
-    cellFromChar 'v' = pd
-    cellFromChar _ = pd
+    cellFromChar '>' = wire R
+    cellFromChar '<' = wire L
+    cellFromChar '^' = wire U
+    cellFromChar 'v' = wire D
+    cellFromChar _ = emp
     buildSpace ::  Ind w h -> Maybe Char
     buildSpace (Mod x, Mod y) = do
       line <- lines' `atMay` y 
