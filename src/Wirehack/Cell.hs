@@ -6,14 +6,13 @@ import Wirehack.Neighbours
 import Data.Functor.Rep
 import Control.Lens hiding (Empty, index)
 import Data.Default
-import qualified Graphics.Vty as V
-import Data.Text.Lens
 
 data Component a =
       Empty
     | Source
     | Sink
     | Cross
+    | And
     | Wire a
   deriving (Eq)
 
@@ -22,6 +21,7 @@ instance Show a => Show (Component a) where
   show Source = "*"
   show Sink = "o"
   show Cross = "+"
+  show And = "&"
   show (Wire d) = show d
 
 data Cell = Cell
@@ -40,11 +40,12 @@ instance Default Cell where
     , _poweredBy=tabulate (const False)
     }
 
-emp, source, cross :: Cell
+emp, source, cross, sink, and' :: Cell
 emp = def
 source = def & component .~ Source
 sink = def & component .~ Sink
 cross = def & component .~ Cross
+and' = def & component .~ And
 
 wire :: Dir -> Cell
 wire d = def & component .~ Wire d

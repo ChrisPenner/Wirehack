@@ -24,13 +24,13 @@ instance Attrs Cell where
 class Renderable a where
   render :: a -> V.Image
 
-instance Renderable (ISpace w h Cell) where
-  render spcd@(ISpace _ (Space spc)) =
+instance Bounds w h => Renderable (ISpace w h Cell) where
+  render spc =
     foldr (V.vertJoin . foldInner) V.emptyImage $ images
     where
       foldInner :: Vector V.Image -> V.Image
       foldInner = foldr V.horizJoin V.emptyImage
-      cellAttrs = (focus <>~ highlighting) . fmap attrs $ spcd
+      cellAttrs = (focus <>~ highlighting) . fmap attrs $ spc
       highlighting  = V.withStyle V.currentAttr V.reverseVideo
-      displayedComponents = T.pack . show <$> spcd
+      displayedComponents = T.pack . show <$> spc
       ISpace _ (Space images) = liftA2 V.text cellAttrs displayedComponents

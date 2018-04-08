@@ -5,10 +5,6 @@ import Wirehack.Space
 import Wirehack.Cell
 import Wirehack.Neighbours
 import Wirehack.Power
-import Control.Comonad
-import Data.Functor.Rep
-import Data.Monoid
-import Control.Comonad.Representable.Store
 import Control.Lens hiding (Empty)
 
 data Status = Good | Bad | Neutral

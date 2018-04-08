@@ -12,6 +12,8 @@ library:
   source-dirs: src
   ghc-options:
   - -Wall
+  - -Werror
+  - -fno-warn-orphans
   dependencies:
   - base >=4.7 && <5
   - adjunctions >=4.4 && <4.5
@@ -33,6 +35,8 @@ executables:
     source-dirs: app
     ghc-options:
     - -Wall
+    - -Werror
+    - -fno-warn-orphans
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N

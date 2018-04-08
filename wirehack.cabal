@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 43640b8fcd327c48a7792a7a22c0be449284132ab6b8fc29b17cff88879be494
+-- hash: 6be778e00183c46fbbd5ed14afd15c9a114e1b842dec9c813dc64d625b8a102d
 
 name:           wirehack
 version:        0.1.0.0
@@ -27,7 +27,7 @@ source-repository head
 library
   hs-source-dirs:
       src
-  ghc-options: -Wall
+  ghc-options: -Wall -Werror -fno-warn-orphans
   build-depends:
       adjunctions >=4.4 && <4.5
     , base >=4.7 && <5
@@ -48,7 +48,6 @@ library
       Wirehack.Cell
       Wirehack.Display
       Wirehack.Events
-      Wirehack.Loop
       Wirehack.Marshal
       Wirehack.Neighbours
       Wirehack.Power
@@ -64,7 +63,7 @@ executable wirehack-exe
   main-is: Main.hs
   hs-source-dirs:
       app
-  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -fno-warn-orphans -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base
     , eve

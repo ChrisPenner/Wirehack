@@ -8,7 +8,6 @@ module Wirehack.Events where
 import Wirehack.Cell
 import Wirehack.Space
 import Wirehack.Neighbours
-import Wirehack.Turn
 import Wirehack.State
 import Data.Char
 
@@ -18,8 +17,6 @@ import Eve.CLI
 
 import Control.Monad.State
 import Control.Lens hiding (Index, Empty, index)
-import Data.Default
-import Data.Functor.Rep
 
 import qualified Graphics.Vty as V
 
@@ -36,7 +33,6 @@ keyDir c =
     'j' -> Just D
     'k' -> Just U
     _ -> Nothing
-keyDir _ = Nothing
 
 keyChar :: Keypress -> Maybe Char
 keyChar (Keypress (V.KChar c) _) = Just c
@@ -60,6 +56,7 @@ handleKeypress (Keypress (V.KChar '*') _) = space . focus .= source
 handleKeypress (Keypress (V.KChar 'o') _) = space . focus .= sink
 handleKeypress (Keypress (V.KChar '+') _) = space . focus .= cross
 handleKeypress (Keypress (V.KChar '.') _) = space . focus .= emp
+handleKeypress (Keypress (V.KChar '&') _) = space . focus .= and'
 handleKeypress k = do
   b <- use latch
   case (guard b >> keyChar k >>= keyDir) of

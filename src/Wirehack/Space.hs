@@ -8,16 +8,13 @@
 {-# language ConstraintKinds #-}
 module Wirehack.Space where
 
-import Eve
 import Data.Distributive
 import Data.Functor.Rep
 import Control.Comonad
-import Data.Monoid
 import qualified Data.Vector as V
 import Control.Lens hiding (index)
 import GHC.TypeLits
 import Data.Proxy
-import Data.Default
 import Data.Functor.Compose
 
 import Control.Comonad.Representable.Store
@@ -36,6 +33,7 @@ newMod n = Mod (n `mod` modulus)
 instance (KnownNat n) => Num (Mod n) where
   Mod a + Mod b = newMod (a + b)
   Mod a - Mod b = Mod a + (Mod (-b))
+  Mod a * Mod b = newMod (a * b)
   abs (Mod a) = Mod (abs a)
   signum = const (newMod 1)
   fromInteger = newMod . fromIntegral
@@ -74,7 +72,7 @@ instance Bounds w h => Applicative (Space w h) where
 instance Bounds w h => Comonad (ISpace w h) where
   extract (ISpace ind spc) = index spc ind
   extend f (ISpace ind spc) =
-    ISpace ind (tabulate (\ix -> f (ISpace ix spc)))
+    ISpace ind (tabulate (\i -> f (ISpace i spc)))
 
 instance Bounds w h => ComonadStore (Ind w h) (ISpace w h) where
   pos (ISpace ind _) = ind

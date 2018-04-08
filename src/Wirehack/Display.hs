@@ -1,7 +1,5 @@
 module Wirehack.Display where
 
-import Wirehack.Space
-import Wirehack.Events
 import Wirehack.Render
 import Wirehack.Turn
 import Wirehack.State

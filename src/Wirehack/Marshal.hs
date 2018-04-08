@@ -7,7 +7,6 @@ import Wirehack.Cell
 import Wirehack.Space
 import Wirehack.Neighbours
 import Data.Functor.Rep
-import Data.Monoid
 import qualified Data.Text as T
 import Safe
 
