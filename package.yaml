@@ -29,6 +29,7 @@ library:
   - eve >=0.1.8 && <0.2
   - eve-cli >=0.2 && <0.3
   - safe >= 0.3 && < 0.4
+  - time >= 1.8 && < 1.10
 executables:
   wirehack-exe:
     main: Main.hs

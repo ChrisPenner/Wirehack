@@ -9,6 +9,7 @@ import Wirehack.Cell
 import Wirehack.Space
 import Wirehack.Neighbours
 import Wirehack.State
+import Wirehack.Marshal
 import Data.Char
 
 import Eve
@@ -19,8 +20,6 @@ import Control.Monad.State
 import Control.Lens hiding (Index, Empty, index)
 
 import qualified Graphics.Vty as V
-
-type HackM w h a = StateT (ISpace w h Cell) IO a
 
 interrupt :: Keypress
 interrupt = Keypress (V.KChar 'c') [V.MCtrl]
@@ -57,6 +56,7 @@ handleKeypress (Keypress (V.KChar 'o') _) = space . focus .= sink
 handleKeypress (Keypress (V.KChar '+') _) = space . focus .= cross
 handleKeypress (Keypress (V.KChar '.') _) = space . focus .= emp
 handleKeypress (Keypress (V.KChar '&') _) = space . focus .= and'
+handleKeypress (Keypress (V.KChar 's') [V.MCtrl]) = save
 handleKeypress k = do
   b <- use latch
   case (guard b >> keyChar k >>= keyDir) of

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6be778e00183c46fbbd5ed14afd15c9a114e1b842dec9c813dc64d625b8a102d
+-- hash: ded3fee68e446e84daf8095f06364a94ba05a1073d7b5c416f67d4fd73063496
 
 name:           wirehack
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
     , safe >=0.3 && <0.4
     , singletons
     , text
+    , time >=1.8 && <1.10
     , vector
     , vty
   exposed-modules:

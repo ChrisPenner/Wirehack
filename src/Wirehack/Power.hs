@@ -23,4 +23,3 @@ powers x Cell{_component=Cross, _poweredBy=p} = p `index` flipDir x
 powers x Cell{_component=Wire x', _poweredBy=p} 
   | (getAny $ foldMap Any p) = x == x'
 powers _ _ = False
-
