@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
+-- This file has been generated from package.yaml by hpack version 0.28.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ded3fee68e446e84daf8095f06364a94ba05a1073d7b5c416f67d4fd73063496
+-- hash: 8726e1ef2be53e37f469d4d7a0985780c9ad4ffaf9c86242894201ab89bfe01f
 
 name:           wirehack
 version:        0.1.0.0
@@ -16,7 +16,6 @@ license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
-
 extra-source-files:
     README.md
 
@@ -45,7 +44,6 @@ library
     , vector
     , vty
   exposed-modules:
-      Wirehack
       Wirehack.Cell
       Wirehack.Display
       Wirehack.Events
