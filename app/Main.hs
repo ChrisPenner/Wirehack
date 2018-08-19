@@ -2,13 +2,19 @@
 
 module Main where
 
-import Wirehack.Display
-import Wirehack.Events
+import Wirehack.Display (renderSpace, stepGame)
+import Wirehack.Events (handleKeypress)
 
-import Control.Concurrent
+import Control.Concurrent (threadDelay)
 import Control.Monad
 import Eve
-import Eve.CLI
+  ( EventDispatcher
+  , addListener_
+  , afterEvent_
+  , asyncEventProvider
+  , eve_
+  )
+import Eve.CLI (initCLI, onKeypress_)
 
 data Timer =
   Timer

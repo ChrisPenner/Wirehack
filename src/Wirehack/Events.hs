@@ -1,24 +1,25 @@
-{-# language RankNTypes #-}
-{-# language ScopedTypeVariables #-}
-{-# language ViewPatterns #-}
-{-# language DataKinds #-}
-{-# language FlexibleInstances #-}
-module Wirehack.Events where
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
 
-import Wirehack.Cell
-import Wirehack.Space
-import Wirehack.Neighbours
-import Wirehack.State
-import Wirehack.Marshal
-import Data.Char
+module Wirehack.Events
+  ( handleKeypress
+  ) where
+
+import Wirehack.Cell (and', cross, emp, sink, source, wire)
+import Wirehack.Marshal (save)
+import Wirehack.Neighbours (Dir(..), move)
+import Wirehack.Space (focus)
+import Wirehack.State (latch, latchMove, space)
 
 import Eve
 import Eve.CLI
 
-
+import Control.Lens hiding (Empty, Index, index)
 import Control.Monad.State
-import Control.Lens hiding (Index, Empty, index)
-
+import Data.Char
 import qualified Graphics.Vty as V
 
 interrupt :: Keypress
@@ -49,7 +50,8 @@ simpleMove (Keypress (V.KChar 'j') _) = space %= move D
 simpleMove _ = return ()
 
 handleKeypress :: Keypress -> App ()
-handleKeypress k | k == interrupt = exit
+handleKeypress k
+  | k == interrupt = exit
 handleKeypress (Keypress (V.KChar ' ') _) = latch %= not
 handleKeypress (Keypress (V.KChar '*') _) = space . focus .= source
 handleKeypress (Keypress (V.KChar 'o') _) = space . focus .= sink

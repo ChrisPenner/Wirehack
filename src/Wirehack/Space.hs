@@ -1,31 +1,43 @@
-{-# language DeriveFunctor #-}
-{-# language FlexibleInstances #-}
-{-# language MultiParamTypeClasses #-}
-{-# language TypeFamilies #-}
-{-# language DataKinds #-}
-{-# language ScopedTypeVariables #-}
-{-# language GADTs #-}
-{-# language ConstraintKinds #-}
-module Wirehack.Space where
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE ConstraintKinds #-}
 
-import Data.Distributive
-import Data.Functor.Rep
+module Wirehack.Space
+  ( ISpace(..)
+  , Ind
+  , Bounds
+  , focus
+  , Space(..)
+  , Mod(..)
+  ) where
+
 import Control.Comonad
-import qualified Data.Vector as V
-import Control.Lens hiding (index)
-import GHC.TypeLits
-import Data.Proxy
-import Data.Functor.Compose
-
 import Control.Comonad.Representable.Store
+import Control.Lens hiding (index)
+import Data.Distributive (Distributive(..))
+import Data.Functor.Compose
+import Data.Functor.Rep (Representable(..), distributeRep)
+import Data.Proxy
+import qualified Data.Vector as V
+import GHC.TypeLits (KnownNat, Nat, natVal)
 
 type Bounds w h = (KnownNat w, KnownNat h)
+
 type Ind w h = (Mod w, Mod h)
 
-newtype Mod (n :: Nat) = Mod Int
+newtype Mod (n :: Nat) =
+  Mod Int
   deriving (Show, Eq)
 
-newMod :: forall m. (KnownNat m) => Int -> Mod m
+newMod ::
+     forall m. (KnownNat m)
+  => Int
+  -> Mod m
 newMod n = Mod (n `mod` modulus)
   where
     modulus = fromIntegral $ natVal (Proxy :: Proxy m)
@@ -71,8 +83,7 @@ instance Bounds w h => Applicative (Space w h) where
 
 instance Bounds w h => Comonad (ISpace w h) where
   extract (ISpace ind spc) = index spc ind
-  extend f (ISpace ind spc) =
-    ISpace ind (tabulate (\i -> f (ISpace i spc)))
+  extend f (ISpace ind spc) = ISpace ind (tabulate (\i -> f (ISpace i spc)))
 
 instance Bounds w h => ComonadStore (Ind w h) (ISpace w h) where
   pos (ISpace ind _) = ind
@@ -87,7 +98,8 @@ instance Bounds w h => Distributive (Space w h) where
 instance Bounds w h => Representable (Space w h) where
   type Rep (Space w h) = Ind w h
   index (Space spc) (Mod x, Mod y) = spc V.! x V.! y
-  tabulate f = Space $ V.generate width (\ x -> V.generate height (\y -> f (Mod x, Mod y)))
+  tabulate f =
+    Space $ V.generate width (\x -> V.generate height (\y -> f (Mod x, Mod y)))
     where
       width = fromIntegral $ natVal (Proxy :: Proxy w)
       height = fromIntegral $ natVal (Proxy :: Proxy h)
@@ -108,7 +120,8 @@ focus :: Bounds w h => Lens' (ISpace w h a) a
 focus = lens getter setter
   where
     getter spc@(ISpace _ _) = extract spc
-    setter (ISpace ind@(Mod x, Mod y) (Space spc)) new = ISpace ind . Space $ spc V.// [(x, newInner)]
+    setter (ISpace ind@(Mod x, Mod y) (Space spc)) new =
+      ISpace ind . Space $ spc V.// [(x, newInner)]
       where
         nestedVal = spc V.! x
         newInner = nestedVal V.// [(y, new)]

@@ -6,12 +6,12 @@
 module Wirehack.State where
 
 import Control.Lens
-import Data.Default
-import Data.Functor.Rep
-import Eve
-import Wirehack.Cell
-import Wirehack.Neighbours
-import Wirehack.Space
+import Data.Default (Default(..))
+import Data.Functor.Rep (Representable(..))
+import Eve (App, HasStates(..), stateLens)
+import Wirehack.Cell (Cell(..), Component(..), component, emp)
+import Wirehack.Neighbours (Dir(..), flipDir, move)
+import Wirehack.Space (Bounds, ISpace(..), focus)
 
 instance Bounds w h => Default (ISpace w h Cell) where
   def = ISpace (0, 0) (tabulate (const emp))

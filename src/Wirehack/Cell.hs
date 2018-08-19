@@ -1,15 +1,26 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
-module Wirehack.Cell where
+module Wirehack.Cell
+  ( component
+  , poweredBy
+  , emp
+  , source
+  , sink
+  , cross
+  , and'
+  , wire
+  , Cell(..)
+  , Component(..)
+  ) where
 
-import Wirehack.Neighbours
+import Wirehack.Neighbours (Dir(..), Neighbours(..))
 
-import Control.Lens hiding (Empty, index)
-import Data.Default
-import Data.Functor.Rep
+import Control.Lens (makeLenses)
+import Data.Default (Default(..))
+import Data.Functor.Rep (Representable(..))
 
--- A component is parameterized over the contents of each wire
--- Typically a direction is held within
+-- | Each cell contains a component
 data Component
   = Empty
   | Source
@@ -35,21 +46,22 @@ data Cell = Cell
 makeLenses ''Cell
 
 instance Show Cell where
-  show cell = cell ^. component . to show
+  show Cell {_component} = show _component
 
+-- The default cell is empty and unpowered
 instance Default Cell where
   def = Cell {_component = Empty, _poweredBy = tabulate (const False)}
 
 emp, source, cross, sink, and' :: Cell
 emp = def
 
-source = def & component .~ Source
+source = def {_component = Source}
 
-sink = def & component .~ Sink
+sink = def {_component = Sink}
 
-cross = def & component .~ Cross
+cross = def {_component = Cross}
 
-and' = def & component .~ And
+and' = def {_component = And}
 
 wire :: Dir -> Cell
-wire d = def & component .~ Wire d
+wire d = def {_component = Wire d}

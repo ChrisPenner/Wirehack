@@ -1,24 +1,19 @@
-{-# language ScopedTypeVariables #-}
-module Wirehack.Turn where
+{-# LANGUAGE ScopedTypeVariables #-}
 
-import Wirehack.Space
-import Wirehack.Cell
-import Wirehack.Neighbours
-import Wirehack.Power
+module Wirehack.Turn
+  ( stepPower
+  ) where
+
 import Control.Lens hiding (Empty)
+import Wirehack.Cell (Cell(..), poweredBy)
+import Wirehack.Neighbours (neighboursOf)
+import Wirehack.Power (getPoweredBy)
+import Wirehack.Space (Bounds, ISpace(..))
 
-data Status = Good | Bad | Neutral
-
-validate :: Bounds w h => ISpace w h Cell -> ISpace w h Status
-validate = fmap toStatus . checkPower
-  where
-    toStatus True = Good
-    toStatus _ = Bad
-
-checkPower :: Bounds w h => ISpace w h Cell -> ISpace w h Bool
-checkPower = fmap hasPower
-
-stepPower :: forall w h. Bounds w h => ISpace w h Cell -> ISpace w h Cell
+stepPower ::
+     forall w h. Bounds w h
+  => ISpace w h Cell
+  -> ISpace w h Cell
 stepPower spc = set poweredBy <$> poweredByNeighbours <*> spc
   where
     poweredByNeighbours = getPoweredBy <$> spc <*> neighboursOf spc

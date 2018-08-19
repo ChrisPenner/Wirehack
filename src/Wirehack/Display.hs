@@ -1,12 +1,15 @@
-module Wirehack.Display where
+module Wirehack.Display
+  ( renderSpace
+  , stepGame
+  ) where
 
-import Wirehack.Render
-import Wirehack.Turn
-import Wirehack.State
+import Wirehack.Render (render)
+import Wirehack.State (space)
+import Wirehack.Turn (stepPower)
 
-import Eve
-import Eve.CLI
 import Control.Lens
+import Eve (App)
+import Eve.CLI (renderImage)
 
 renderSpace :: App ()
 renderSpace = do
@@ -17,4 +20,3 @@ stepGame :: App ()
 stepGame = do
   space %= stepPower
   renderSpace
-

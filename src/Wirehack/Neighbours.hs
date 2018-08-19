@@ -1,18 +1,30 @@
-{-# language ViewPatterns #-}
-{-# language DeriveFunctor #-}
-{-# language TypeFamilies #-}
-{-# language RecordWildCards #-}
-module Wirehack.Neighbours where
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RecordWildCards #-}
 
-import Data.Functor.Rep
-import Data.Distributive
+module Wirehack.Neighbours
+  ( Neighbours(..)
+  , Dir(..)
+  , flipDir
+  , nearby
+  , move
+  , neighboursOf
+  ) where
 
-import Wirehack.Space
+import Data.Distributive (Distributive(..))
+import Data.Functor.Rep (Representable(..), distributeRep)
 
-import Control.Comonad.Store
+import Wirehack.Space (Bounds, ISpace(..), Ind)
+
+import Control.Comonad.Store (Comonad(..), experiment, peeks, seeks)
 import Data.Monoid
 
-data Dir = L | R | U | D
+data Dir
+  = L
+  | R
+  | U
+  | D
   deriving (Eq)
 
 instance Show Dir where
@@ -41,7 +53,7 @@ data Neighbours a = Neighbours
   } deriving (Show, Eq, Functor)
 
 instance Foldable Neighbours where
-  foldMap f Neighbours{..} = f left <> f right <> f up <> f down
+  foldMap f Neighbours {..} = f left <> f right <> f up <> f down
 
 instance Distributive Neighbours where
   distribute = distributeRep
@@ -52,12 +64,7 @@ instance Representable Neighbours where
   index n R = right n
   index n U = up n
   index n D = down n
-  tabulate f =
-    Neighbours { left=f L
-               , right=f R
-               , up=f U
-               , down=f D
-               }
+  tabulate f = Neighbours {left = f L, right = f R, up = f U, down = f D}
 
 neighbourPos :: Bounds w h => Neighbours (Ind w h)
 neighbourPos = tabulate indOf
